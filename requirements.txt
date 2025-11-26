@@ -1,0 +1,14 @@
+langchain
+langgraph
+vconsoleprint
+google-genai
+dotenv
+langchain_community
+sentence-transformers
+langchain-huggingface
+langchain-groq
+langgraph-checkpoint-sqlite
+faiss-cpu
+tqdm
+ormsgpack
+langgraph-checkpoint-sqlite
