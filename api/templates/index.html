@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Concierge | Premium Fashion Discovery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg: #09090b;
+            --surface: #18181b;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --border: rgba(255, 255, 255, 0.08);
+            --glass: rgba(24, 24, 27, 0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at top left, #1e1b4b, transparent 40%),
+                        radial-gradient(circle at bottom right, #0c0a09, transparent 40%);
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            z-index: 10;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            scroll-behavior: smooth;
+        }
+
+        #chat-window::-webkit-scrollbar { width: 6px; }
+        #chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .bubble {
+            max-width: 85%;
+            padding: 1.25rem 1.5rem;
+            border-radius: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid var(--border);
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .user-bubble {
+            align-self: flex-end;
+            background: var(--accent);
+            border: none;
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+            box-shadow: 0 10px 25px -5px var(--accent-glow);
+        }
+
+        .ai-bubble {
+            align-self: flex-start;
+            background: var(--glass);
+            backdrop-filter: blur(8px);
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .msg-img {
+            max-width: 300px;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            display: block;
+            border: 1px solid var(--border);
+        }
+
+        .product-grid {
+            display: flex;
+            overflow-x: auto;
+            gap: 1.25rem;
+            padding: 1rem 0;
+            margin-top: 1.5rem;
+            scrollbar-width: none;
+        }
+
+        .product-grid::-webkit-scrollbar { display: none; }
+
+        .product-card {
+            min-width: 220px;
+            background: rgba(255, 255, 256, 0.03);
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover { 
+            transform: translateY(-8px); 
+            border-color: var(--accent);
+            background: rgba(255, 255, 256, 0.05);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .product-detail { padding: 1rem; }
+        .product-title { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .product-price { font-weight: 700; color: #fbbf24; font-size: 1rem; }
+
+        .input-container {
+            padding: 1.5rem 2rem 2.5rem;
+            position: relative;
+        }
+
+        .input-bar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.3s;
+        }
+
+        .input-bar:focus-within { border-color: var(--accent); }
+
+        input[type="text"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+
+        .send-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0 1.5rem;
+            height: 44px;
+            border-radius: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .send-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
+
+        #preview-box {
+            position: absolute;
+            bottom: 100%;
+            left: 2rem;
+            background: var(--glass);
+            padding: 0.75rem;
+            border-radius: 1rem;
+            border: 1px solid var(--accent);
+            display: none;
+            margin-bottom: 1rem;
+            animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes pop { from { scale: 0.5; opacity: 0; } to { scale: 1; opacity: 1; } }
+
+        #preview-img { width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem; }
+
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 { color: var(--accent); margin-top: 0; }
+        .markdown-content p { margin: 0.5rem 0; }
+        
+        .loader-wrap { display: flex; align-items: center; gap: 0.75rem; font-weight: 500; color: var(--text-secondary); }
+        .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 0.8s infinite alternate; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse { to { opacity: 0.3; transform: scale(1.2); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">AI Concierge</div>
+        </header>
+
+        <main id="chat-window">
+            <div class="bubble ai-bubble">
+                Hello! I'm your fashion discovery assistant. ✨<br>
+                Upload a photo or tell me what style you're looking for today.
+            </div>
+        </main>
+
+        <div class="input-container">
+            <div id="preview-box">
+                <img id="preview-img" src="">
+                <div style="text-align: center; margin-top: 4px; font-size: 10px; cursor: pointer;" onclick="clearFile()">Remove</div>
+            </div>
+            
+            <div class="input-bar">
+                <label for="file-in" class="icon-btn">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                </label>
+                <input type="file" id="file-in" hidden accept="image/*">
+                <input type="text" id="text-in" placeholder="Ask about a style or product..." onkeydown="if(event.key==='Enter') send()">
+                <button class="send-btn" onclick="send()">Discover</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const win = document.getElementById('chat-window');
+        const fileIn = document.getElementById('file-in');
+        const textIn = document.getElementById('text-in');
+        const previewBox = document.getElementById('preview-box');
+        const previewImg = document.getElementById('preview-img');
+
+        let activeImg = null;
+
+        fileIn.onchange = (e) => {
+            const f = e.target.files[0];
+            if(f) {
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    activeImg = ev.target.result;
+                    previewImg.src = activeImg;
+                    previewBox.style.display = 'block';
+                }
+                r.readAsDataURL(f);
+            }
+        };
+
+        function clearFile() {
+            activeImg = null;
+            fileIn.value = '';
+            previewBox.style.display = 'none';
+        }
+
+        async function send() {
+            const text = textIn.value.trim();
+            const file = fileIn.files[0];
+            if(!text && !file) return;
+
+            addMsg(text, true, activeImg);
+            
+            const upFile = file;
+            const upText = text;
+            clearFile();
+            textIn.value = '';
+
+            const lid = addLoad();
+
+            try {
+                let q = upText || "recommend style";
+                if(upFile) {
+                    const fd = new FormData();
+                    fd.append('file', upFile);
+                    const r1 = await fetch(`/api/llm/response?query=${encodeURIComponent(q)}`, { method: 'POST', body: fd });
+                    const j1 = await r1.json();
+                    if(j1.status==='success') q = j1.llm_query;
+                }
+
+                const r2 = await fetch(`/api/retreive/?query=${encodeURIComponent(q)}&k=5`, { method: 'POST' });
+                const j2 = await r2.json();
+
+                if(j2.status==='success') {
+                    const r3 = await fetch(`/api/summarize/?query=${encodeURIComponent(upText || q)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(j2.results)
+                    });
+                    const j3 = await r3.json();
+                    remLoad(lid);
+                    addAI(j3.summary, j2.results);
+                }
+            } catch(e) {
+                remLoad(lid);
+                addMsg("I'm sorry, I'm having trouble connecting right now.", false);
+            }
+        }
+
+        function addMsg(txt, isUser, img) {
+            const b = document.createElement('div');
+            b.className = `bubble ${isUser ? 'user-bubble' : 'ai-bubble'}`;
+            if(img) b.innerHTML += `<img src="${img}" class="msg-img">`;
+            if(txt) b.innerHTML += `<span>${txt}</span>`;
+            win.appendChild(b);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        function addLoad() {
+            const id = 'l-'+Date.now();
+            const b = document.createElement('div');
+            b.id = id; b.className = 'bubble ai-bubble';
+            b.innerHTML = `<div class="loader-wrap"><div class="dot"></div><div class="dot"></div><div class="dot"></div> Curating style...</div>`;
+            win.appendChild(b);
+            win.scrollTop = win.scrollHeight;
+            return id;
+        }
+
+        function remLoad(id) { const e = document.getElementById(id); if(e) e.remove(); }
+
+        function addAI(sum, prods) {
+            const b = document.createElement('div');
+            b.className = 'bubble ai-bubble';
+            let h = `<div class="markdown-content">${marked.parse(sum)}</div>`;
+            if(prods?.length) {
+                h += `<div class="product-grid">`;
+                prods.forEach(p => {
+                    const m = p.metadata;
+                    h += `
+                        <div class="product-card">
+                            <img src="${m.image_url}" alt="${m.name}">
+                            <div class="product-detail">
+                                <div class="product-title">${m.name}</div>
+                                <div class="product-price">₹${m.discounted_price}</div>
+                            </div>
+                        </div>`;
+                });
+                h += `</div>`;
+            }
+            b.innerHTML = h;
+            win.appendChild(b);
+            win.scrollTop = win.scrollHeight;
+        }
+    </script>
+</body>
+</html>
