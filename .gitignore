@@ -1,18 +1,60 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-myvenv/
-ipynb_checkpoints/untitled-checkpoint.ipynb
-.ipynb_checkpoints/
-.vscode
-__pycache__/
-myvenv
-myvenv/
-tempImage
-tempImage/
-testImage
-testImage/
-checkpoint1.db
-data/db.pkl
-threads.json
-.env
+*.py[cod]
+*$py.class
 
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Project Specific Ignores
+artifacts/
+logs/
+vector_db/
+tempImage/
+testImage/
+*.db
+*.pkl
+*.log
+
+# Keep some essentials
+!pyproject.toml
+!uv.lock
+!Readme.md
+!LICENSE

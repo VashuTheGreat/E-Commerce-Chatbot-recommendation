@@ -1,120 +1,98 @@
-{"id":"78921","variant":"standard","title":"Fashion Recommendation Chatbot README"}
-# 🛍️ Fashion Recommendation Chatbot
+# 🛍️ E-Commerce Chatbot Recommendation System
 
-This project is an **AI-powered chatbot** for e-commerce, designed to help customers discover products by interacting with a conversational interface. Users can upload product images, ask questions, and receive personalized product recommendations based on the uploaded image and textual queries.
-
----
-
-## 🔹 Features
-
-* Upload product images and get recommendations.
-* Chat interface for asking product-related queries.
-* Fetches product metadata such as brand, price, and discounts.
-* Interactive display of recommended products with images.
-* Stores chat history per session/thread for future reference.
+An AI-powered recommendation system that identifies products and suggests similar items based on visual and textual features. Built with LangChain, FAISS, and Sentence Transformers.
 
 ---
 
-## 🔹 Dataset
+## 🚀 Key Features
 
-This project uses the **Fashion Product Images dataset** from Kaggle:
+- **Semantic Product Search**: Find similar products based on natural language descriptions.
+- **Visual Intelligence**: Integrate image-based discovery (via `app.py`).
+- **Metadata-Rich Results**: Displays brand, price, usage, and image URLs for recommendations.
+- **Efficient Vector Search**: Uses FAISS for high-performance similarity fetching.
+- **Robust Pipelines**: Automated training and prediction pipelines with comprehensive logging.
 
-* Dataset 1 (Small): `paramaggarwal/fashion-product-images-small`
-* Dataset 2 (Latest version): `paramaggarwal/fashion-product-images-dataset`
+---
 
-You can download datasets using the [`kagglehub`](https://pypi.org/project/kagglehub/) library:
+## 🛠️ Tech Stack
 
-```python
-import kagglehub
+- **Core**: Python
+- **Orchestration**: LangChain
+- **Vector Database**: FAISS
+- **Embeddings**: Sentence Transformers (`all-MiniLM-L6-v2`)
+- **Package Manager**: [uv](https://github.com/astral-sh/uv)
+- **UI (Optional)**: Streamlit
 
-# Download small dataset
-path_small = kagglehub.dataset_download("paramaggarwal/fashion-product-images-small")
-print("Path to small dataset:", path_small)
+---
 
-# Download latest dataset
-path_latest = kagglehub.dataset_download("paramaggarwal/fashion-product-images-dataset")
-print("Path to latest dataset:", path_latest)
+## 📂 Project Structure
+
+```text
+E-Commerce-Chatbot-recommendation/
+├── src/ECRecom/
+│   ├── components/       # Data ingestion, transformation, similarity fetch
+│   ├── data_access/      # Data loading and vector DB interface
+│   ├── entity/           # Config and Artifact entities
+│   ├── pipelines/        # Training and Prediction pipeline logic
+│   └── constants/        # Project-wide constants (paths, models, etc.)
+├── artifacts/            # Generated data and vector DB artifacts
+├── logs/                 # Execution logs
+├── tests/                # Test scripts for pipelines
+├── app.py                # Main application UI
+├── chat.py               # Chat interaction logic
+└── main.py               # Entry point
 ```
 
-* `styles.csv` contains product metadata like brand, category, and product name.
-* Image files are stored in structured folders in the dataset.
+---
+
+## ⚙️ Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/VashuTheGreat/E-Commerce-Chatbot-recommendation.git
+   cd E-Commerce-Chatbot-recommendation
+   ```
+
+2. **Install dependencies**:
+   Using `uv` (recommended):
+   ```bash
+   uv sync
+   ```
+   Or using `pip`:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Environment Setup**:
+   Create a `.env` file and add your configuration (e.g., API keys if applicable).
 
 ---
 
-## 🔹 Installation
+## 🏃 Usage
 
-1. Clone this repository:
-
+### 1. Training Pipeline
+Rerun the data ingestion and transformation to rebuild the vector database:
 ```bash
-git clone <your-repo-url>
-cd <repo-folder>
+uv run src/ECRecom/tests/run_training_pipeline.py
 ```
 
-2. Install dependencies:
-
+### 2. Prediction Pipeline
+Test similarity results:
 ```bash
-pip install -r requirements.txt
+uv run src/ECRecom/tests/run_prediction_pipeline.py
 ```
 
-3. Make sure you have `kagglehub` installed to fetch datasets:
-
+### 3. Run the Chat App
 ```bash
-pip install kagglehub
+uv run chat.py
 ```
-
----
-
-## 🔹 Usage
-
-1. Run the Streamlit app:
-
-```bash
-streamlit run app.py
-```
-
-2. Open the app in your browser:
-
-* Upload an image of a product (e.g., glasses, shirt, shoes).
-* Ask questions or describe what kind of recommendation you want.
-* Chatbot will show recommended products with images, brand, price, and discount details.
-
----
-
-## 🔹 Folder Structure
-
-```
-E-COMMERECECHAT/
-├─ app.py                 # Streamlit app
-├─ chat.py                # Chatbot logic
-├─ main.py                # Optional script runner
-├─ db.py                  # Database handler
-├─ data/
-│  ├─ styles/             # JSON files of individual products
-│  ├─ images.csv           # Metadata CSV
-│  ├─ db.pkl               # Serialized database
-│  └─ threads.json         # Stored chat sessions
-├─ tempImage/             # Uploaded product images
-├─ testImage/             # Test images
-├─ references/            # Reference screenshots/images
-├─ requirements.txt
-├─ .env                   # Environment variables
-├─ .gitignore
-└─ myvenv/                # Python virtual environment
-```
-
----
-
-## 🔹 Future Improvements
-
-* Add **multi-image support** for batch recommendations.
-* Integrate **AI-based similarity search** using embeddings.
-* Add **user authentication** and persistent storage for returning customers.
-* Enhance UI for better mobile responsiveness.
 
 ---
 
 ## 🔹 License
 
-MIT License  
+Distributed under the [MIT License](LICENSE).
 
-Made with ❤️ by VashuTheGreat
+---
+
+Made with ❤️ by [VashuTheGreat](https://github.com/VashuTheGreat)
