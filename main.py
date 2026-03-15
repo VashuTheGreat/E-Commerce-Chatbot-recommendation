@@ -1,6 +1,11 @@
 from api.main import app 
 import uvicorn
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from logger import *
 
 os.makedirs("tempImage",exist_ok=True)
 if __name__ == "__main__":

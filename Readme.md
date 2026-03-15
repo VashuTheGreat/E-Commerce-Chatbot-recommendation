@@ -1,27 +1,58 @@
 # 🛍️ E-Commerce Chatbot Recommendation System
 
-An AI-powered recommendation system that identifies products and suggests similar items based on visual and textual features. Built with LangChain, FAISS, and Sentence Transformers.
+An AI-powered e-commerce assistant that combines visual intelligence with semantic product discovery. This system allows users to find products through natural language queries and image uploads, powered by FastAPI, LangGraph, and FAISS.
 
 ---
 
 ## 🚀 Key Features
 
-- **Semantic Product Search**: Find similar products based on natural language descriptions.
-- **Visual Intelligence**: Integrate image-based discovery (via `app.py`).
-- **Metadata-Rich Results**: Displays brand, price, usage, and image URLs for recommendations.
-- **Efficient Vector Search**: Uses FAISS for high-performance similarity fetching.
-- **Robust Pipelines**: Automated training and prediction pipelines with comprehensive logging.
+- **Multimodal Discovery**: Search for products using text or by uploading an image.
+- **Visual Intelligence**: Automated image analysis and summary generation using Gemini Pro Vision.
+- **Semantic Product Retrieval**: High-precision product suggestions based on visual and textual features.
+- **Context-Aware Chat**: Interactive chatbot interface for refining recommendations.
+- **Automated Resource Management**: Background task for temporary image cleanup to optimize storage.
+- **Production-Ready Backend**: Robust FastAPI architecture with standardized logging and exception handling.
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    User([User Interface]) -->|Query/Image| FastAPI[FastAPI Backend]
+    
+    subgraph "API Layer"
+        FastAPI --> LLM_R[LLM Response Router]
+        FastAPI --> ECR_R[Product Retriever Router]
+    end
+    
+    subgraph "Core Logic (src/)"
+        LLM_R --> LLM_Pipe[LLM Prediction Pipeline]
+        ECR_R --> ECR_Pipe[Retrieval Pipeline]
+        
+        LLM_Pipe --> Gemini[Gemini-2.0-Flash]
+        LLM_Pipe --> Llama[Llama-3.1-8b]
+        
+        ECR_Pipe --> VectorDB[(FAISS Vector DB)]
+        ECR_Pipe --> Embeddings[Sentence Transformers]
+    end
+    
+    FastAPI -->|Cleanup| Background[Background Task Manager]
+```
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Core**: Python
-- **Orchestration**: LangChain
+- **Framework**: FastAPI
+- **LLM Orchestration**: LangChain & LangGraph
+- **Models**:
+  - **Vision**: `gemini-2.0-flash`
+  - **Reasoning**: `llama-3.1-8b-instant`
 - **Vector Database**: FAISS
 - **Embeddings**: Sentence Transformers (`all-MiniLM-L6-v2`)
 - **Package Manager**: [uv](https://github.com/astral-sh/uv)
-- **UI (Optional)**: Streamlit
+- **Frontend**: HTML/JS (Jinja2 Templates)
 
 ---
 
@@ -29,18 +60,19 @@ An AI-powered recommendation system that identifies products and suggests simila
 
 ```text
 E-Commerce-Chatbot-recommendation/
-├── src/ECRecom/
-│   ├── components/       # Data ingestion, transformation, similarity fetch
-│   ├── data_access/      # Data loading and vector DB interface
-│   ├── entity/           # Config and Artifact entities
-│   ├── pipelines/        # Training and Prediction pipeline logic
-│   └── constants/        # Project-wide constants (paths, models, etc.)
+├── api/
+│   ├── ECRecom/          # Retrieval-related API routes
+│   ├── LLMResponse/       # LLM chat-related API routes
+│   ├── templates/        # Frontend (index.html)
+│   └── main.py           # FastAPI application definition
+├── src/
+│   ├── ECRecom/          # Product retrieval engine (Pipelines, Vector DB)
+│   └── LLMResponse/       # LLM reasoning & agentic logic (Nodes, Graphs)
 ├── artifacts/            # Generated data and vector DB artifacts
 ├── logs/                 # Execution logs
-├── tests/                # Test scripts for pipelines
-├── app.py                # Main application UI
-├── chat.py               # Chat interaction logic
-└── main.py               # Entry point
+├── tempImage/            # Temporary storage for uploaded images
+├── main.py               # Entry point (Uvicorn runner)
+└── pyproject.toml        # Dependency management
 ```
 
 ---
@@ -58,34 +90,30 @@ E-Commerce-Chatbot-recommendation/
    ```bash
    uv sync
    ```
-   Or using `pip`:
-   ```bash
-   pip install -r requirements.txt
-   ```
 
 3. **Environment Setup**:
-   Create a `.env` file and add your configuration (e.g., API keys if applicable).
+   Create a `.env` file based on `.env.example`:
+   ```env
+   GOOGLE_API_KEY=your_key_here
+   GROQ_API_KEY=your_key_here
+   ```
 
 ---
 
 ## 🏃 Usage
 
 ### 1. Training Pipeline
-Rerun the data ingestion and transformation to rebuild the vector database:
+Initialize the vector database with your product data:
 ```bash
 uv run src/ECRecom/tests/run_training_pipeline.py
 ```
 
-### 2. Prediction Pipeline
-Test similarity results:
+### 2. Run the Application
+Start the FastAPI server:
 ```bash
-uv run src/ECRecom/tests/run_prediction_pipeline.py
+uv run main.py
 ```
-
-### 3. Run the Chat App
-```bash
-uv run chat.py
-```
+Access the UI at `http://localhost:8080`.
 
 ---
 
