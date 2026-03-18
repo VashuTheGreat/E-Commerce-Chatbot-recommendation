@@ -1,3 +1,16 @@
+
+
+---
+title: E Commerce Chatbot Recommendation
+emoji: 🐨
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+short_description: AI powered e-commerce chatbot that recommends products
+---
+
 # 🛍️ E-Commerce Chatbot Recommendation System
 
 An AI-powered e-commerce assistant that combines visual intelligence with semantic product discovery. This system allows users to find products through natural language queries and image uploads, powered by FastAPI, LangGraph, and FAISS.
