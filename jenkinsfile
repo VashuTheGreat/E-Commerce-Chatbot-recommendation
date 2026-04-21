@@ -58,7 +58,7 @@ colorTo: green
 sdk: docker
 app_file: main.py
 pinned: false
-short_description: This is the Agentic Blog Writing Agent
+short_description: AI-powered E-Commerce Chatbot with product recommendations
 ---
 
 EOF
