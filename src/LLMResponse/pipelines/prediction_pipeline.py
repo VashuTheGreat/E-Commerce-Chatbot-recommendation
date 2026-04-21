@@ -3,6 +3,8 @@ from typing import List, Optional
 from langchain_core.messages import HumanMessage
 from src.LLMResponse.graphs.orchastrator_graph import graph
 from utils.asyncHandler import asyncHandler
+from src.LLMResponse.tools.data_fetcher_tool import fetcher_instance
+
 
 @asyncHandler
 async def run_llm_response_pipeline(
@@ -12,7 +14,6 @@ async def run_llm_response_pipeline(
 ) -> dict:
     logging.info(f"run_llm_response_pipeline — started | thread_id={thread_id} | query='{user_query}' | images={image_paths}")
 
-    from src.LLMResponse.tools.data_fetcher_tool import fetcher_instance
     fetcher_instance.reset()
 
     initial_state = {
