@@ -14,4 +14,4 @@ app.include_router(ECRrouter, prefix="/api/retreive", tags=["Retreive"])
 app.include_router(TRAINrouter, prefix="/api/train", tags=["Train"])
 @app.get("/")
 async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html", context={})
