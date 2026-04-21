@@ -15,19 +15,30 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo "📥 Cloning repository..."
-                sh 'rm -rf "${WORKSPACE}"/* "${WORKSPACE}"/.[!.]* 2>/dev/null || true'
                 git branch: 'main', url: "${REPO_URL}"
+            }
+        }
+        stage('Remove heavy/unnecessary dirs') {
+            steps {
+                echo "🗑️ Removing notebook/styles to skip large unused files..."
+                sh 'rm -rf notebook/styles'
+        
+                echo "🗑️ Removing notebook/vector_data to skip large unused files..."
+                sh 'rm -rf notebook/vector_data'
             }
         }
 
         stage('Setup Dependencies') {
             steps {
-                echo "🔧 Setting git identity and upgrading HF library..."
+                echo "🔧 Setting git identity and installing HF CLI..."
                 sh '''#!/bin/bash
 set -e
 git config --global user.name "jenkins"
 git config --global user.email "jenkins@local"
-pip3 install --user -U huggingface_hub
+export PATH=$HOME/.local/bin:$PATH
+if ! command -v hf &> /dev/null; then
+    pip3 install --user -U huggingface_hub
+fi
 '''
             }
         }
@@ -82,32 +93,11 @@ hf repos create "$HF_USERNAME/$SPACE_NAME" --type space --space-sdk docker || tr
         stage('Upload to HF Space') {
             steps {
                 echo "📤 Uploading project files..."
-                retry(3) {
-                    sh '''#!/bin/bash
+                sh '''#!/bin/bash
 set -e
 export PATH=$HOME/.local/bin:$PATH
-python3 - <<PYEOF
-import os
-from huggingface_hub import HfApi
-
-api = HfApi(token=os.environ["HF_TOKEN"])
-api.upload_large_folder(
-    repo_id=f"{os.environ['HF_USERNAME']}/{os.environ['SPACE_NAME']}",
-    repo_type="space",
-    folder_path=".",
-    ignore_patterns=[
-        ".git", ".git/**",
-        "**/__pycache__", "**/*.pyc", "**/*.pyo",
-        ".venv", ".venv/**",
-        "logs", "logs/**",
-        "tempImage", "tempImage/**",
-        "*.egg-info", "**/*.egg-info/**",
-    ],
-)
-print("✅ Upload complete!")
-PYEOF
+hf upload "$HF_USERNAME/$SPACE_NAME" . --repo-type=space
 '''
-                }
             }
         }
 
