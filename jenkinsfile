@@ -15,6 +15,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo "📥 Cloning repository..."
+                cleanWs()
                 git branch: 'main', url: "${REPO_URL}"
             }
         }
@@ -84,11 +85,13 @@ hf repos create "$HF_USERNAME/$SPACE_NAME" --type space --space-sdk docker || tr
         stage('Upload to HF Space') {
             steps {
                 echo "📤 Uploading project files..."
-                sh '''#!/bin/bash
+                retry(3) {
+                    sh '''#!/bin/bash
 set -e
 export PATH=$HOME/.local/bin:$PATH
-hf upload "$HF_USERNAME/$SPACE_NAME" . --repo-type=space
+hf upload-large-folder "$HF_USERNAME/$SPACE_NAME" . --repo-type=space
 '''
+                }
             }
         }
 
