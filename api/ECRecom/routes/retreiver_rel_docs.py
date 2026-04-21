@@ -1,13 +1,18 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 from src.ECRecom.pipelines.prediction_pipeline import PredictionPipeline
 
 router = APIRouter()
 
+class RetrieveRequest(BaseModel):
+    query: str
+    k: int = 5
+
 @router.post("/")
-async def retreive_docs(query: str, k: int = 5):
+async def retreive_docs(request: RetrieveRequest):
     try:
         pipeline = PredictionPipeline()
-        docs = await pipeline.initiate(query=query, k=k)
+        docs = await pipeline.initiate(query=request.query, k=request.k)
         
         results = []
         for doc in docs:

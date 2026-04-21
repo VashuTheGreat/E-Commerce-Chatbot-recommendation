@@ -235,6 +235,7 @@
     <div class="container">
         <header>
             <div class="logo">AI Concierge</div>
+            <div id="timer-display" style="font-weight: 600; color: #fbbf24; font-variant-numeric: tabular-nums;">05:00</div>
         </header>
 
         <main id="chat-window">
@@ -267,8 +268,51 @@
         const textIn = document.getElementById('text-in');
         const previewBox = document.getElementById('preview-box');
         const previewImg = document.getElementById('preview-img');
+        const sendBtn = document.querySelector('.send-btn');
+        const timerDisplay = document.getElementById('timer-display');
 
         let activeImg = null;
+        const threadId = 'session-' + Math.random().toString(36).substr(2, 9);
+        
+        let timeLeft = 300;
+        let timerInterval;
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${m}:${s}`;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 300;
+            updateTimerDisplay();
+            timerDisplay.style.color = '#fbbf24';
+            textIn.disabled = false;
+            sendBtn.disabled = false;
+            textIn.placeholder = "Ask about a style or product...";
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 60) {
+                    timerDisplay.style.color = '#ef4444'; // Red text when 1 min remaining
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "Time's up!";
+                    textIn.disabled = true;
+                    sendBtn.disabled = true;
+                    textIn.placeholder = "Session expired. Please refresh.";
+                    addMsg("This chat session has expired and history was deleted for your privacy. Please refresh the page to start a new chat.", false);
+                }
+            }, 1000);
+        }
+
+        // Start the timer when the page loads
+        startTimer();
 
         fileIn.onchange = (e) => {
             const f = e.target.files[0];
@@ -296,6 +340,9 @@
 
             addMsg(text, true, activeImg);
             
+            // Reset the session timer on user activity
+            startTimer();
+            
             const upFile = file;
             const upText = text;
             clearFile();
@@ -304,27 +351,22 @@
             const lid = addLoad();
 
             try {
-                let q = upText || "recommend style";
-                if(upFile) {
-                    const fd = new FormData();
+                const fd = new FormData();
+                fd.append('query', upText || "recommend style");
+                fd.append('thread_id', threadId);
+                if (upFile) {
                     fd.append('file', upFile);
-                    const r1 = await fetch(`/api/llm/response?query=${encodeURIComponent(q)}`, { method: 'POST', body: fd });
-                    const j1 = await r1.json();
-                    if(j1.status==='success') q = j1.llm_query;
                 }
 
-                const r2 = await fetch(`/api/retreive/?query=${encodeURIComponent(q)}&k=5`, { method: 'POST' });
-                const j2 = await r2.json();
+                const response = await fetch('/api/llm/response', { method: 'POST', body: fd });
+                const data = await response.json();
 
-                if(j2.status==='success') {
-                    const r3 = await fetch(`/api/summarize/?query=${encodeURIComponent(upText || q)}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(j2.results)
-                    });
-                    const j3 = await r3.json();
-                    remLoad(lid);
-                    addAI(j3.summary, j2.results);
+                remLoad(lid);
+
+                if (data.status === 'success') {
+                    addAI(data.final_response, data.db_results);
+                } else {
+                    addMsg("Error: " + (data.message || "Something went wrong."), false);
                 }
             } catch(e) {
                 remLoad(lid);
