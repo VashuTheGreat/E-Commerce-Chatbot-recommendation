@@ -235,8 +235,28 @@
     <div class="container">
         <header>
             <div class="logo">AI Concierge</div>
-            <div id="timer-display" style="font-weight: 600; color: #fbbf24; font-variant-numeric: tabular-nums;">05:00</div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button onclick="handleRetrain()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: 0.75rem; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;">Retrain</button>
+                <div id="timer-display" style="font-weight: 600; color: #fbbf24; font-variant-numeric: tabular-nums;">05:00</div>
+            </div>
         </header>
+
+        <script>
+            async function handleRetrain() {
+                const password = prompt("Enter retraining password:");
+                if (password === "alookhalo") {
+                    try {
+                        const response = await fetch('/api/train/');
+                        const data = await response.json();
+                        alert(data.status === 'success' ? 'Retraining started!' : 'Error: ' + data.message);
+                    } catch (e) {
+                        alert('Failed to connect to server');
+                    }
+                } else if (password !== null) {
+                    alert("Unauthorized!");
+                }
+            }
+        </script>
 
         <main id="chat-window">
             <div class="bubble ai-bubble">
