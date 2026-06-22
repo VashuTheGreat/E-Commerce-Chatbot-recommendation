@@ -6,9 +6,9 @@ import shutil
 import asyncio
 import time
 from typing import Optional
-from src.LLMResponse.pipelines.prediction_pipeline import run_llm_response_pipeline
+from pipelines.prediction_pipeline2 import run_llm_response_pipeline
 import logging
-from src.LLMResponse.memmory import memory
+from memmory import memory
 
 from api.constants import SECONDS  # e.g. SECONDS = 20
 import logging

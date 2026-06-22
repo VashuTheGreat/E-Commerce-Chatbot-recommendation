@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from src.ECRecom.pipelines.prediction_pipeline import PredictionPipeline
+from pipelines.prediction_pipeline import PredictionPipeline
 
 router = APIRouter()
 

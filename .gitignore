@@ -45,6 +45,8 @@ ENV/
 
 # Project Specific Ignores
 artifacts/
+notebook/data.zip
+notebook/data
 logs/
 vector_db/
 tempImage/

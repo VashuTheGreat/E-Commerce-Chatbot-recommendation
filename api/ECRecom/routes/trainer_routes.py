@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from src.ECRecom.pipelines.training_pipeline import TrainingPipeline
-from src.ECRecom.entity.config_entity import DataIngestionConfig, DataTransformationConfig
+from pipelines.training_pipeline import TrainingPipeline
+from entity.config_entity import DataIngestionConfig, DataTransformationConfig
 import logging
 router = APIRouter()
 

@@ -1,0 +1,10 @@
+required_columns:
+  - id
+  - product_search_description
+  - name
+  - variant
+  - brand
+  - price
+  - discounted_price
+  - usage
+  - image_url
