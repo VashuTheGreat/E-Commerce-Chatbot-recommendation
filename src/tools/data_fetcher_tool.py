@@ -3,7 +3,7 @@ import json
 import httpx
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
-from src.LLMResponse.constants import DB_FETCH_URL
+from src.constants import DB_FETCH_URL
 
 class DataFetcherInput(BaseModel):
     query: str = Field(description="A descriptive product search query (e.g. 'men navy blue casual shirt').")

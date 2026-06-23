@@ -1,5 +1,5 @@
 from utils.asyncHandler import asyncHandler
-from src.LLMResponse.entity import State
+from src.models.state_model import State
 from llm.llm_loader import llm
 from langchain_core.output_parsers import StrOutputParser
 

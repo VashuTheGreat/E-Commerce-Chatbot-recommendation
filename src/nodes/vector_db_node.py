@@ -1,5 +1,5 @@
 from utils.asyncHandler import asyncHandler
-from src.LLMResponse.entity import State
+from src.models.state_model import State
 import pickle
 import os
 

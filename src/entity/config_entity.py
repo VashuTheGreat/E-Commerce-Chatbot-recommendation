@@ -42,7 +42,7 @@ class ModelTrainingConfig:
     batch_size: int = 32
     dropout: float = 0.6
     cache_dir: str = os.path.join(ARTIFACT_FOLDER, "model_training", "cache")
-    train_file_path: str = ""
+    train_file_path: str = os.path.join(TRANSFORMED_ARTIFACT_DIR, TRAIN_FILE_NAME)
 
 Config = ModelTrainingConfig
 

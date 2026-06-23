@@ -1,5 +1,5 @@
 from langchain_groq import ChatGroq
-from src.LLMResponse.constants import CHAT_MODEL_NAME
+from src.constants import CHAT_MODEL_NAME
 import os
 from dotenv import load_dotenv
 

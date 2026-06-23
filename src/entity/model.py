@@ -12,9 +12,12 @@ class MyModel:
 
         self.model = Multimodal(config=config).to(self.device)
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=self.config.learning_rate)
-        train_df=pd.read_csv(config.train_file_path)
-        pos_weight_val = train_df[train_df['label'] == 0].shape[0] / (train_df[train_df['label'] == 1].shape[0] + 1e-5)
-        pos_weight_tensor = torch.tensor([pos_weight_val], dtype=torch.float32).to(self.device)
+
+        pos_weight_tensor = None
+        if config.train_file_path and os.path.exists(config.train_file_path):
+            train_df = pd.read_csv(config.train_file_path)
+            pos_weight_val = train_df[train_df['label'] == 0].shape[0] / (train_df[train_df['label'] == 1].shape[0] + 1e-5)
+            pos_weight_tensor = torch.tensor([pos_weight_val], dtype=torch.float32).to(self.device)
         self.loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor)
 
         self.train_loss = []
@@ -90,6 +93,22 @@ class MyModel:
             logits = self.model(img_feats, text_feats)
             probs = torch.sigmoid(logits)
         return probs
+
+        
+    def predict_emb(self, img_feats, text_feats):
+        self.model.eval()
+
+        with torch.no_grad():
+            img_feats = img_feats.to(self.device)
+            text_feats = text_feats.to(self.device)
+
+            embedding = self.model(
+                img_feats,
+                text_feats,
+                return_embedding=True
+            )
+
+        return embedding    
 
     def save_model(self):
         os.makedirs(self.config.model_dir, exist_ok=True)

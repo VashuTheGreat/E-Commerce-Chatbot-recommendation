@@ -43,6 +43,9 @@
 __pycache__/
 artifact/
 artifacts/
+data/
+*.zip
+*.pt
 build/
 coverage.xml
 develop-eggs/

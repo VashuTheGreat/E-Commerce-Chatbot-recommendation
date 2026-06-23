@@ -45,8 +45,10 @@ ENV/
 
 # Project Specific Ignores
 artifacts/
+data/
 notebook/data.zip
-notebook/data
+notebook/data/
+notebook/multimodal_model.pt
 logs/
 vector_db/
 tempImage/
@@ -54,6 +56,8 @@ testImage/
 *.db
 *.pkl
 *.log
+*.zip
+*.pt
 
 # Keep some essentials
 !pyproject.toml

@@ -15,6 +15,8 @@ from torch.utils.data import DataLoader
 from src.models.muti_model import MultimodalDataset
 import yaml
 from dataclasses import asdict
+from datetime import datetime
+
 class Model_Evaluation:
     def __init__(self, model_evaluation_config: ModelEvaluationConfig, data_transformation_artifact: DataTransformationArtifact, model_training_artifact: ModelTrainingArtifact, model_training_config: ModelTrainingConfig):
         self.model_evaluation_config = model_evaluation_config
@@ -30,7 +32,7 @@ class Model_Evaluation:
         try:
             import dagshub
             try:
-                dagshub.auth.add_app_token("fee29b0c9f88f7918ad1474919b54153acd45f5e")
+                dagshub.auth.add_app_token(os.getenv("MLFLOW_API"))
                 dagshub.init(repo_owner='vanshsharma7832', repo_name='E-Commerce-Chatbot-recommendation', mlflow=True)
             except Exception as ex:
                 logging.warning(f"DagsHub initialization failed: {ex}")
@@ -112,7 +114,8 @@ class Model_Evaluation:
             with open(metrics_file_path, "w") as f:
                 yaml.dump(metrics_data, f)
 
-            mlflow.set_experiment(self.model_evaluation_config.mlflow_experiment_name)
+            experiment_name = f"{self.model_evaluation_config.mlflow_experiment_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            mlflow.set_experiment(experiment_name)
             with mlflow.start_run(run_name=self.model_evaluation_config.mlflow_run_name):
                 mlflow.log_params(asdict(self.model_training_config))
                 mlflow.log_metric("train_loss", avg_train_loss)
@@ -132,25 +135,11 @@ class Model_Evaluation:
                 try:
                     mlflow.pytorch.log_model(
                         pytorch_model=self.model.model,
-                        artifact_path="model",
-                        registered_model_name=self.model_evaluation_config.mlflow_model_name
+                        name="multimodal_model_registry",
+                        serialization_format="pickle"
                     )
-                    from mlflow import MlflowClient
-                    client = MlflowClient()
-                    versions = client.get_latest_versions(self.model_evaluation_config.mlflow_model_name)
-                    if len(versions) > 0:
-                        latest_version = versions[0].version
-                        client.set_registered_model_alias(
-                            name=self.model_evaluation_config.mlflow_model_name,
-                            alias="candidate",
-                            version=latest_version
-                        )
                 except Exception as register_ex:
-                    logging.warning(f"Model registration failed: {register_ex}")
-                    mlflow.pytorch.log_model(
-                        pytorch_model=self.model.model,
-                        artifact_path="model"
-                    )
+                    logging.warning(f"Model logging failed: {register_ex}")
 
             logging.info("Exited model evaluation step")
             return ModelEvaluationArtifact(

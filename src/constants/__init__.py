@@ -18,3 +18,7 @@ TEST_AND_VAL_SPLIT = 0.3
 TRAIN_FILE_NAME = "train.csv"
 TEST_FILE_NAME = "test.csv"
 VAL_FILE_NAME = "val.csv"
+
+CHAT_MODEL_NAME = "llama-3.3-70b-versatile"
+GEMINI_MODEL_NAME = "gemini-2.0-flash"
+DB_FETCH_URL = "http://localhost:7860/api/retreive/"
