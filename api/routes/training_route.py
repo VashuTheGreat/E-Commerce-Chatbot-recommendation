@@ -1,14 +1,15 @@
 from dataclasses import asdict
-from fastapi import APIRouter
+from fastapi import APIRouter,Depends
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 from src.pipelines.training_pipeline import TrainingPipeline
 from src.entity.config_entity import DataIngestionConfig,DataTransformationConfig,ModelTrainingConfig,ModelEvaluationConfig
+from api.middlewares.authenticate_user_middleware import authenticate_user
 
 router = APIRouter()
 
 
-@router.get("/train")
+@router.get("/train",dependencies=[Depends(authenticate_user)])
 async def train_model():
     """Use this route for model training"""
 

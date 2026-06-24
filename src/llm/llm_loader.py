@@ -1,11 +1,11 @@
+import logging
 from langchain_groq import ChatGroq
 from src.constants import CHAT_MODEL_NAME
-import os
-from dotenv import load_dotenv
+from src.config.app_config import app_config
 
-load_dotenv()
-
+logging.info("loading LLM model configuration")
 llm = ChatGroq(
     model=CHAT_MODEL_NAME,
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=app_config.groq_api_key
 )
+logging.info(f"LLM model initialized: {CHAT_MODEL_NAME}")

@@ -22,3 +22,11 @@ VAL_FILE_NAME = "val.csv"
 CHAT_MODEL_NAME = "llama-3.3-70b-versatile"
 GEMINI_MODEL_NAME = "gemini-2.0-flash"
 DB_FETCH_URL = "http://localhost:7860/api/retreive/"
+PUBLIC_TEMP_DIR = "public"
+
+
+TEXT_MODEL_NAME:str = "sentence-transformers/all-mpnet-base-v2"
+MODEL_URI:str = "models:/E-Commerce-Recommendation_Model/1"
+import torch
+DEVICE:str = "cuda" if torch.cuda.is_available() else "cpu"
+
