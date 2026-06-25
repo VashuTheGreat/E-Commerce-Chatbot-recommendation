@@ -1,5 +1,5 @@
 from src.utils.asyncHandler import asyncHandler
-from src.core.dependencies import connect_data
+from src.entity.data_access import Connect_data
 from src.entity.config_entity import DataIngestionConfig
 from src.constants import ARTIFACT_FOLDER
 from src.entity.artifact_entity import DataIngestionArtifact
@@ -10,7 +10,7 @@ import logging
 class Data_Ingestor:
     def __init__(self,data_ingestion_config:DataIngestionConfig):
         self.data_ingestion_config=data_ingestion_config
-        self.data_access=connect_data(data_path=data_ingestion_config.data_path)
+        self.data_access = Connect_data(data_path=data_ingestion_config.data_path)
         logging.info(f"Data_Ingestor initialized with config: {data_ingestion_config}")
         
 
