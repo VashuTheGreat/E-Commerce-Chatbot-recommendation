@@ -1,12 +1,12 @@
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,Form,Request
 from fastapi.responses import StreamingResponse
 from fastapi.exceptions import HTTPException
 from src.pipelines.graph_runner_pipeline import GraphRunnerPipeline
 from api.models.chat_agent_models import ChatAgentModel
 from api.middlewares.multer_middleware import multer_middleware
 from api.middlewares.authenticate_user_middleware import authenticate_user
-
+import json
 
 logging.info("POST /chat - instantiating graph runner pipeline")
 graph_runner_pipeline = GraphRunnerPipeline()
@@ -15,12 +15,14 @@ logging.info("POST /chat - calling initiate on pipeline")
 router = APIRouter()
 
 @router.post("/chat",dependencies=[Depends(authenticate_user)])
-async def chat(body: ChatAgentModel, file: str = Depends(multer_middleware)):
-    logging.info(f"POST /chat endpoint called with thread_id: {body.thread_id}, message: '{body.message}'")
-    logging.info(f"POST /chat file upload path from middleware: '{file}'")
+async def chat(request:Request,body: str=Form(...), file: str = Depends(multer_middleware)):
     try:
+        thread_id = request.state['user_id']
+        body = ChatAgentModel.model_validate(json.loads(body))
+        logging.info(f"POST /chat endpoint called with thread_id: {body.thread_id}, message: '{body.message}'")
+        logging.info(f"POST /chat file upload path from middleware: '{file}'")
         res = StreamingResponse(graph_runner_pipeline.initiate(
-            thread_id=body.thread_id,
+            thread_id=thread_id,
             query=body.message,
             image_path=file
         ),media_type="text/event-stream")

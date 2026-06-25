@@ -1,5 +1,7 @@
-from api.main import app
 from src.logger import *
+
+from api.main import app
+
 import uvicorn
 
 

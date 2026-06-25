@@ -25,6 +25,8 @@ DB_FETCH_URL = "http://localhost:7860/api/retreive/"
 PUBLIC_TEMP_DIR = "public"
 
 
+COOKIE_MAX_AGE_SECONDS=60*5
+
 TEXT_MODEL_NAME:str = "sentence-transformers/all-mpnet-base-v2"
 MODEL_URI:str = "models:/E-Commerce-Recommendation_Model/1"
 import torch

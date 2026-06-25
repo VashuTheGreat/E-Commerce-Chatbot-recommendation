@@ -21,7 +21,8 @@ async def orchestrator(state: State) -> State:
     logging.info("orchestrator - entered node")
     logging.info(f"orchestrator - input state keys: {list(state.keys())}")
     system_msg = SystemMessage(content=ORCHESTRATOR_SYSTEM_PROMPT)
-    messages = [system_msg] + state["messages"]
+    image_uploaded = True if state.get("image_path") else False
+    messages = [system_msg] + state["messages"] + [f"image_uploaded: {image_uploaded}"]
     logging.info(f"orchestrator - total messages to invoke: {len(messages)}")
     llm_structured = llm.with_structured_output(Orchastrator_Output)
     logging.info("orchestrator - invoking LLM with structured output")

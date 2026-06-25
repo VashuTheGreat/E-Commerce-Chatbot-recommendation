@@ -1,0 +1,43 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Train &middot; E-Commerce Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+  <header class="border-b border-slate-700 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="badge">Admin</span>
+      <h1 class="text-xl font-bold">Retrain Model</h1>
+  </div>
+    <nav class="flex items-center gap-4 text-sm">
+      <a class="underline hover:text-white" href="/chat">Chat</a>
+      <a class="underline hover:text-white" href="/health">Health</a>
+      <button id="logout-btn" type="button" class="btn" style="background:#ef4444">Logout</button>
+  </nav>
+</header>
+
+  <main class="container" style="max-width:760px">
+    <section class="card mt-6">
+      <p class="text-slate-300">
+        Trigger the full training pipeline: data ingestion &rarr; transformation &rarr; training &rarr; evaluation.
+        This may take several minutes depending on dataset size.
+    </p>
+      <button id="train-btn" type="button" class="btn mt-4">Start training</button>
+  </section>
+
+    <section id="status-card" class="card mt-4 hidden">
+      <div class="flex items-center gap-2">
+        <span id="status-spinner" class="spinner"></span>
+        <strong id="status-text">Running&hellip;</strong>
+    </div>
+      <pre id="result" class="mt-3 text-xs bg-slate-950 p-3 rounded border border-slate-700 overflow-auto" style="max-height:50vh"></pre>
+  </section>
+</main>
+
+  <script src="/static/js/constants.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/train.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login &middot; E-Commerce Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="max-w-xl mx-auto">
+      <header class="mb-8 text-center">
+        <span class="badge">E-Commerce Recommendation Chatbot</span>
+        <h1 class="text-3xl font-bold mt-3">Start a session</h1>
+        <p class="text-slate-400 mt-2">Pick how long you want the chat to stay alive. Your session auto-deletes after expiry</p>
+     </header>
+
+      <section class="card">
+        <div id="loading" class="flex items-center gap-2 text-slate-400">
+          <span class="spinner"></span>
+          <span>Loading options&hellip;</span>
+       </div>
+
+        <div id="options" class="grid grid-cols-1 sm:grid-cols-2 gap-3 hidden"></div>
+
+        <p id="status" class="mt-4 text-sm text-slate-400"></p>
+     </section>
+
+      <nav class="mt-6 text-center text-sm text-slate-400">
+        <a class="underline hover:text-white" href="/health">Server health</a>
+        <span class="mx-2">&middot;</span>
+        <a class="underline hover:text-white" href="/chat">Chat (auto-login)</a>
+     </nav>
+   </div>
+ </div>
+
+  <script src="/static/js/constants.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/login.js"></script>
+</body>
+</html>
