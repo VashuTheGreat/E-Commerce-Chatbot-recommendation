@@ -1,5 +1,15 @@
 import os
 import sys
+
+# Set up dummy environment variables for tests if they are not set,
+# to prevent import-time exceptions from third-party clients (like ChatGroq, Pinecone, MLflow, HF)
+os.environ.setdefault("PINECONE_API_KEY", "mock_pinecone_api_key")
+os.environ.setdefault("GROQ_API_KEY", "mock_groq_api_key")
+os.environ.setdefault("MLFLOW_API_KEY", "mock_mlflow_api_key")
+os.environ.setdefault("HUGGINGFACE_API_KEY", "mock_huggingface_api_key")
+os.environ.setdefault("DAGSHUB_OWNER", "vanshsharma7832")
+os.environ.setdefault("DAGSHUB_REPO", "E-Commerce-Chatbot-recommendation")
+
 import pandas as pd
 import pytest
 from unittest.mock import MagicMock
