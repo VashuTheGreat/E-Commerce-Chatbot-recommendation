@@ -34,6 +34,39 @@ def dummy_dataframe():
         ],
     })
 
+
+
+
+@pytest.fixture
+def dummy_dataframe_transformed():
+    """Return a small transformed DataFrame for testing."""
+
+    return pd.DataFrame({
+        "image_path": [
+            "artifacts/data_transformation/images/15970.png",
+            "artifacts/data_transformation/images/30805.png",
+            "artifacts/data_transformation/images/59263.png",
+            "artifacts/data_transformation/images/39386.png",
+            "artifacts/data_transformation/images/30039.png",
+            "artifacts/data_transformation/images/21379.png",
+        ],
+        "product_search_description": [
+            "men accessories watches watches black winter casual skagen men black watch",
+            "men apparel topwear tshirts grey summer casual inkfruit mens chain reaction t-shirt",
+            "men apparel bottomwear jeans blue summer casual peter england men party blue jeans",
+            "men apparel bottomwear jeans blue summer casual peter england men party blue jeans",
+            "men accessories watches watches black winter casual skagen men black watch",
+            "women accessories watches watches silver winter casual titan women silver watch",
+        ],
+        "label": [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+        ],
+    })
 # --------------------------------------------------------------------
 # Temporary directory fixture – reusable across tests
 # --------------------------------------------------------------------
