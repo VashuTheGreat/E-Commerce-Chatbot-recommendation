@@ -60,6 +60,28 @@ querie: "lightweight waterproof hiking backpack"
 """
 
 
+COLUMN_DESCRIPTIONS = {
+    "id": "Unique numeric product identifier. Not useful for category/brand/price analysis.",
+    "product_search_description": "Long free-text product description (used for similarity search only). NOT a category label.",
+    "name": "Product name / title.",
+    "variant": "Sub-variant of the product (e.g. size, pack, edition). Often sparse.",
+    "brand": "Brand of the product.",
+    "price": "Listed price in INR (float).",
+    "discounted_price": "Effective/sale price in INR (float).",
+    "usage": "Product category / usage type (e.g. Casual, Sports, Formal). THIS is the column users mean when they say 'category' or 'type'.",
+    "image_url": "Public image URL. Do not display this to the user.",
+}
+
+
+CATEGORY_COLUMN_HINT = (
+    "\n\nCategory Mapping Rule\n"
+    "When the user asks about 'categories', 'category count', 'types of products', "
+    "or anything that sounds like product classification, ALWAYS use the `usage` column. "
+    "Do NOT use `product_search_description` (that is descriptive prose, each row is unique), "
+    "and do NOT use `name` or `variant` for category aggregation."
+)
+
+
 CHAT_LLM_PROMPT = """You are a helpful e-commerce shopping assistant and sales manager whose primary goal is to help users discover and purchase products.
 
 Always format your responses in Markdown.
@@ -78,28 +100,19 @@ Recommend products using only the supplied product metadata.
 Format each product exactly as:
 
 Product Name
-Category:
+Usage (Category):
 Brand:
-Color:
-Price:
-Description:
+Price (after discount):
+Listed Price:
+Description (short summary):
+
+Do NOT invent fields like "Color" that do not exist in the dataset. Only include fields that are present in the retrieved product metadata. If a field is missing from metadata, omit it instead of guessing.
 
 After each product, briefly explain why it matches the user's requirements.
 
-Example:
-
-Nike Running Shoes
-Category: Footwear
-Brand: Nike
-Color: Black
-Price: ₹4,999
-Description: Lightweight running shoes designed for comfort and performance.
-
-Why this fits: These shoes are lightweight and suitable for daily running, matching your requirement for comfortable sports footwear.
-
 When No Products Are Retrieved
 Politely inform the user that no matching products were found.
-Suggest alternative categories, brands, colors, price ranges, or related products that may help refine the search.
+Suggest alternative categories, brands, price ranges, or related products that may help refine the search.
 Continue assisting the user instead of ending the conversation.
 General Questions
 
@@ -113,25 +126,34 @@ A pandas DataFrame named df is already available inside the tool environment.
 
 You MUST use code_runner whenever the user requests information that requires inspecting, filtering, aggregating, counting, grouping, or analyzing the dataset.
 
-Examples include:
+The dataset's exact schema (columns + dtypes + sample row + per-column semantic description) is provided to you as part of the system prompt on every call. Read it carefully before writing any analytical query.
 
+Use the actual column names exactly as listed. NEVER guess or invent column names.
+
+Column semantics to remember:
+- `usage` = product category (use this for any "category" question).
+- `product_search_description` = descriptive prose (most rows are unique; do NOT use it for category/brand counting).
+- There is no `Color` or `Category` column in this dataset.
+
+If you need a value you cannot recall (e.g. a specific brand spelling, the price range, the number of rows), call code_runner once with the exact query — do not approximate.
+
+Examples of analytical requests:
 How many products are available?
-How many unique categories exist?
-What brands are available?
+How many unique categories exist?  (use `usage`)
+What brands are available?         (use `brand`)
 What is the average product price?
-Show products under ₹1000.
-Which category has the most products?
-List all unique colors.
-Count products by brand.
+Show products under ₹1000.         (use `discounted_price` or `price`)
+Which category has the most products? (use `usage`)
+List all unique colors.            (this dataset has no color column — say so)
+Count products by brand.           (use `brand`)
 
 For these requests:
-
 Execute Python/Pandas code using code_runner.
 Use the returned results to answer the user.
 Never guess dataset values.
 Never claim information that was not obtained from the tool.
 Response Priority
-Data-analysis request → Use code_runner.
+Data-analysis request → Use code_runner with the correct column.
 Product recommendation request with retrieved products → Recommend products.
 Product recommendation request without retrieved products → Explain that no matches were found and suggest alternatives.
 General conversation → Respond naturally.

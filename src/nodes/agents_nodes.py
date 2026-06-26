@@ -12,7 +12,8 @@ from src.entity.config_entity import ModelTrainingConfig
 from src.utils.asyncHandler import asyncHandler
 from src.core.dependencies import get_img_transformer, image_encoder_eval
 from src.core.dependencies import text_encoder_eval, text_tokenizer
-from src.core.dependencies import my_model, vectorizer
+from src.core.dependencies import my_model, vectorizer, df_schema
+from src.prompts import ORCHESTRATOR_SYSTEM_PROMPT, CHAT_LLM_PROMPT, COLUMN_DESCRIPTIONS, CATEGORY_COLUMN_HINT
 
 tools = [code_runner]
 
@@ -132,6 +133,20 @@ async def chat(state: State):
     logging.info(f"chat - current message history length: {len(messages)}")
     db_res = state.get("db_res", [])
     logging.info(f"chat - db_res count: {len(db_res)}")
+    schema = df_schema()
+    schema_block = (
+        "\n\nDataset Schema (use these EXACT column names in code_runner):\n"
+        f"columns: {schema['columns']}\n"
+        f"dtypes: {schema['dtypes']}\n"
+        f"shape: {schema['shape']}\n"
+        f"sample row: {schema['sample']}\n"
+        "Per-column semantics:\n"
+        + "\n".join(f"- {col}: {desc}" for col, desc in COLUMN_DESCRIPTIONS.items())
+        + "\n"
+        "DO NOT guess column names. If a name you expect is absent, "
+        "use one of the columns listed above."
+        + CATEGORY_COLUMN_HINT
+    )
     if db_res:
         retreived_res = []
         for r in db_res:
@@ -141,11 +156,14 @@ async def chat(state: State):
                 retreived_res.append(str(r.metadata))
             else:
                 retreived_res.append(str(r))
-        system_content = f"{CHAT_LLM_PROMPT}\n\nRetrieved product metadata:\n" + "\n".join(retreived_res)
+        system_content = (
+            f"{CHAT_LLM_PROMPT}{schema_block}\n\nRetrieved product metadata:\n"
+            + "\n".join(retreived_res)
+        )
         logging.info(f"chat - constructed system prompt with metadata. length: {len(system_content)}")
     else:
-        system_content = f"{CHAT_LLM_PROMPT}"
-        logging.info("chat - using standard system prompt without product metadata")
+        system_content = f"{CHAT_LLM_PROMPT}{schema_block}"
+        logging.info("chat - using standard system prompt with dataset schema")
     messages = [SystemMessage(content=system_content)] + messages
     llm_with_tools = llm.bind_tools(tools=tools)
     logging.info("chat - invoking LLM with bound tools")

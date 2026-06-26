@@ -4,12 +4,14 @@ from src.entity.data_access import Connect_data
 from src.entity.config_entity import ModelTrainingConfig
 from src.components.vectorizing_data import Vectorizer
 from torchvision.transforms import v2
-from src.constants import DEVICE
+from src.constants import DEVICE, DATA_PATH
 from src.models.muti_model import ImageEncoder,TextEncoder
 import torch
 from src.constants import TEXT_MODEL_NAME
 from src.config.app_config import app_config
 from transformers import AutoTokenizer
+import logging
+import pandas as pd
 
 
 # Model training Pipeline
@@ -17,10 +19,6 @@ from transformers import AutoTokenizer
 def my_model():
     return MyModel(ModelTrainingConfig())
 
-
-@lru_cache
-def connect_data():
-    return Connect_data()
 
 @lru_cache
 def vectorizer():
@@ -51,4 +49,33 @@ def text_encoder_eval():
 @lru_cache
 def text_tokenizer():
     return AutoTokenizer.from_pretrained(TEXT_MODEL_NAME, token=app_config.huggingface_api_key)
+
+
+@lru_cache
+def connect_data():
+    return Connect_data(data_path=DATA_PATH)
+
+@lru_cache
+def df_schema() -> dict:
+    logging.info("df_schema - cache miss. loading csv from %s", DATA_PATH)
+    df = pd.read_csv(DATA_PATH)
+    df = df[:10]
+    return {
+        "columns": df.columns.tolist(),
+        "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
+        "shape": tuple(df.shape),
+        "sample": df.head(1).to_dict(orient="records"),
+    }
     
+
+
+
+# loading all the heavy files before the system statts
+_ = my_model()
+_ = vectorizer()
+_ = get_img_transformer()
+_ = image_encoder_eval()
+_ = text_encoder_eval()
+_ = text_tokenizer()
+_ = connect_data()
+_ = df_schema()

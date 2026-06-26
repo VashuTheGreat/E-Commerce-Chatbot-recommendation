@@ -23,15 +23,16 @@ class LoadVectorDB:
 class Connect_data:
     def __init__(self,data_path:str):
         self.data_path:str=data_path
+        self.data =pd.read_csv(self.data_path)
         
     
 
     @asyncHandler
     async def load_data(self)->pd.DataFrame:
         logging.info("Entered in the connect db")
-        data=pd.read_csv(self.data_path)
+        data = self.data
         logging.info("Exited from the connect db")
-        data=data[:10] # for testing purpose only
+        # data=data[:10] # for testing purpose only
         return data
 
         

@@ -2,8 +2,7 @@ import pandas as pd
 import logging
 import ast
 from src.utils.asyncHandler import asyncHandler
-from src.entity.data_access import Connect_data
-from src.constants import DATA_PATH
+from src.core.dependencies import connect_data
 from langchain_core.tools import tool
 
 @tool(description="Executes python code on the dataframe df to query and answer user questions.")
@@ -12,7 +11,7 @@ async def code_runner(code: str):
     logging.info("code_runner tool - entering tool execution")
     logging.info(f"code_runner tool - code payload:\n{code}")
     logging.info("code_runner tool - establishing data connection and loading dataframe")
-    df = await Connect_data(DATA_PATH).load_data()
+    df = await connect_data().load_data()
     local_vars = {"df": df, "pd": pd}
     logging.info(f"code_runner tool - loaded dataframe shape: {df.shape if hasattr(df, 'shape') else 'unknown'}")
     try:
