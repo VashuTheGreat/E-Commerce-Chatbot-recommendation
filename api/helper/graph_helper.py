@@ -1,4 +1,3 @@
-from IPython.core.magics import logging
 import os
 import shutil
 from src.constants import PUBLIC_TEMP_DIR
