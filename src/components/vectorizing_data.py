@@ -81,6 +81,7 @@ class InferenceDataSet(Dataset):
 class Vectorizer:
     def __init__(self, data_path=None):
         logging.info(f"Vectorizer - initializing with data_path: {data_path}")
+        logging.info(f"config {app_config}")
         if data_path is None:
             data_path = DataIngestionConfig().data_path
         self.data_path = data_path
