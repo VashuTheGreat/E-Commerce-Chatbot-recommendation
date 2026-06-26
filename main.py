@@ -1,12 +1,9 @@
-from api.main import app 
+from src.logger import *
+
+from api.main import app
+
 import uvicorn
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
 
-from logger import *
-
-os.makedirs("tempImage",exist_ok=True)
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    uvicorn.run("main:app", host="0.0.0.0", port=7860,reload=True)

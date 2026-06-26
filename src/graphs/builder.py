@@ -1,0 +1,95 @@
+import logging
+from langgraph.graph import START, END, StateGraph
+from src.models.agent_models import State
+from src.nodes.agents_nodes import orchestrator, chat, retreiver_node, tools
+from langgraph.prebuilt import ToolNode, tools_condition
+from src.memmory import memory
+from src.utils.asyncHandler import asyncHandler
+
+logging.info("Initializing graph builder")
+
+workflow = StateGraph(State)
+
+logging.info("Adding orchestrator node")
+workflow.add_node("orchestrator", orchestrator)
+logging.info("Adding chat node")
+workflow.add_node("chat", chat)
+logging.info("Adding retreiver node")
+workflow.add_node("retreiver", retreiver_node)
+logging.info("Adding tools node")
+workflow.add_node("tools", ToolNode(tools))
+
+logging.info("Adding edge from START to orchestrator")
+workflow.add_edge(START, "orchestrator")
+
+def route_orchestrator(state):
+    target = state.get("redirect_to", "chat_node")
+    logging.info(f"route_orchestrator conditional edge evaluated target: {target}")
+    return target
+
+logging.info("Adding conditional edges from orchestrator")
+workflow.add_conditional_edges(
+    "orchestrator",
+    route_orchestrator,
+    {
+        "chat_node": "chat",
+        "retreiver_node": "retreiver"
+    }
+)
+
+logging.info("Adding edge from retreiver to chat")
+workflow.add_edge("retreiver", "chat")
+
+logging.info("Adding conditional edges from chat to tools or END")
+workflow.add_conditional_edges(
+    "chat",
+    tools_condition,
+    {
+        "tools": "tools",
+        "__end__": END
+    }
+)
+logging.info("Adding edge from tools to chat")
+workflow.add_edge("tools", "chat")
+
+logging.info("Compiling graph workflow with memory checkpointer")
+graph = workflow.compile(checkpointer=memory)
+logging.info("Graph workflow compiled successfully")
+
+try:
+    with open("graph.png", "wb") as f:
+        f.write(graph.get_graph().draw_mermaid_png())
+    logging.info("Graph PNG diagram saved")
+except Exception as e:
+    logging.error(f"Failed to save graph diagram: {e}")
+
+
+
+
+@asyncHandler
+async def deleteThread(thread_id: str):
+    logging.info(f"deleteThread called for thread_id: {thread_id}")
+    try:
+        cp = memory
+        state = await cp.aget_tuple(config={'configurable': {'thread_id': thread_id}})
+        if state is None:
+            logging.info(f"Thread {thread_id} not found, nothing to delete.")
+            return False
+        await cp.adelete_thread(thread_id=thread_id)
+        logging.info(f"Thread {thread_id} deleted successfully.")
+        return True
+    except Exception as e:
+        logging.error(f"Error deleting thread {thread_id}: {e}")
+        return False
+
+@asyncHandler
+async def load_conversation(thread_id):
+    logging.info(f"load_conversation called for thread_id: {thread_id}")
+    try:
+        state = graph.get_state(config={'configurable': {'thread_id': thread_id}})
+        messages = state.values.get('messages', [])
+        logging.info(f"load_conversation succeeded. retrieved {len(messages)} messages.")
+        return messages
+    except Exception as e:
+        logging.error(f"Error loading conversation: {e}")
+        return []
