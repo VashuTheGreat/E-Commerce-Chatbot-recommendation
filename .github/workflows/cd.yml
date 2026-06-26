@@ -1,0 +1,50 @@
+name: Deploy to HuggingFace Space
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Hugging Face container registry
+        env:
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_API_KEY }}
+        run: |
+          echo "$HF_TOKEN" | docker login registry.hf.space -u VashuTheGreat2 --password-stdin
+
+      - name: Build and push Docker image to HF Space
+        env:
+          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          MLFLOW_API_KEY: ${{ secrets.MLFLOW_API_KEY }}
+          DAGSHUB_OWNER: ${{ secrets.DAGSHUB_OWNER }}
+          DAGSHUB_REPO: ${{ secrets.DAGSHUB_REPO }}
+          HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+        run: |
+          SPACE_NAME="VashuTheGreat2/E-Commerce-Chatbot-recommendation"
+          IMAGE_NAME="registry.hf.space/${SPACE_NAME}:latest"
+          docker buildx build \
+            --platform linux/amd64 \
+            --tag "${IMAGE_NAME}" \
+            --build-arg PINECONE_API_KEY="${PINECONE_API_KEY}" \
+            --build-arg GROQ_API_KEY="${GROQ_API_KEY}" \
+            --build-arg MLFLOW_API_KEY="${MLFLOW_API_KEY}" \
+            --build-arg DAGSHUB_OWNER="${DAGSHUB_OWNER}" \
+            --build-arg DAGSHUB_REPO="${DAGSHUB_REPO}" \
+            --build-arg HUGGINGFACE_API_KEY="${HUGGINGFACE_API_KEY}" \
+            --push \
+            .
