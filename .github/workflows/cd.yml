@@ -99,4 +99,21 @@ jobs:
           hf repos create "$HF_USERNAME/$SPACE_NAME" --type space --space-sdk docker || true
           
           echo "📤 Uploading project files..."
-          hf upload "$HF_USERNAME/$SPACE_NAME" . --repo-type=space
+          hf upload "$HF_USERNAME/$SPACE_NAME" . \
+            --repo-type=space \
+            --exclude ".venv/*" \
+            --exclude "artifacts/*" \
+            --exclude "notebook/*" \
+            --exclude ".pytest_cache/*" \
+            --exclude "logs/*" \
+            --exclude "build/*" \
+            --exclude "data/*" \
+            --exclude "__pycache__/*" \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "*.db" \
+            --exclude "*.pkl" \
+            --exclude "*.log" \
+            --exclude "*.zip" \
+            --exclude "*.pt" \
+            --exclude "*.png"
