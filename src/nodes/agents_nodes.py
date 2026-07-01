@@ -2,6 +2,7 @@ import os
 import torch
 import cv2
 import logging
+from warnings import deprecated
 from langchain_core.messages import SystemMessage
 from src.models.agent_models import Orchastrator_Output
 from src.llm.llm_loader import llm
@@ -82,8 +83,13 @@ def _get_text_feat(text, config, device):
     return txt_feat
 
 @asyncHandler
+@deprecated(
+    "retreiver_node is deprecated — it uses MyModel.predict_emb which merges image+text into a "
+    "single 512-d embedding against a unified index. Use retriever_node_v2 instead, which "
+    "queries the dual (image + text) Pinecone indexes separately and fuses with RRF."
+)
 async def retreiver_node(state: State):
-    logging.info("entering retreiver_node")
+    logging.info("[DEPRECATED] entering retreiver_node")
     query = state.get("query_for_db_search", "")
     logging.info(f"retreiver_node - query for db search: {query}")
     if not query:
@@ -124,6 +130,69 @@ async def retreiver_node(state: State):
         return {"db_res": matches}
     except Exception as e:
         logging.error(f"retreiver_node - error during vector query: {e}")
+        return {"db_res": []}
+
+
+@asyncHandler
+async def retriever_node_v2(state: State):
+    """New dual-index retriever node.
+
+    Uses ``ImageEncoder`` and ``TextEncoder`` directly to obtain separate
+    image and text query vectors, then calls ``Vectorizer.invoke()`` which
+    internally runs Pinecone queries against the two independent indexes and
+    fuses the results with Reciprocal Rank Fusion (RRF).
+
+    If the user has not uploaded an image ``img_vec`` is passed as ``None``
+    and the retriever falls back to a text-only search.
+    """
+    logging.info("entering retriever_node_v2")
+    query = state.get("query_for_db_search", "")
+    logging.info(f"retriever_node_v2 - query: {query}")
+    if not query:
+        logging.warning("retriever_node_v2 - empty search query. returning empty list.")
+        return {"db_res": []}
+
+    config = ModelTrainingConfig()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logging.info(f"retriever_node_v2 - using device: {device}")
+
+    # ── text vector (always present) ────────────────────────────────────
+    txt_feat = _get_text_feat(query, config, device)  # (1, 768)
+    txt_vec: list = txt_feat.squeeze(0).cpu().tolist()
+    logging.info(f"retriever_node_v2 - text vector length: {len(txt_vec)}")
+
+    # ── image vector (None when no image uploaded) ──────────────────────
+    image_path = state.get("image_path")
+    img_vec = None
+    if image_path and os.path.exists(image_path):
+        img_feat = _get_image_feat(image_path, config, device)  # (1, 2048)
+        img_vec = img_feat.squeeze(0).cpu().tolist()
+        logging.info(f"retriever_node_v2 - image vector length: {len(img_vec)}")
+    else:
+        logging.info("retriever_node_v2 - no image provided; img_vec=None (text-only search)")
+
+    try:
+        vec_db = vectorizer()
+        top_k = state.get("top_k", 5)
+        logging.info(f"retriever_node_v2 - querying dual Pinecone indexes. top_k: {top_k}")
+        # invoke() -> vec_db.query(img_vec, text_vec, top_k)
+        # If img_vec is None  -> text-only query on the text index
+        # If both are given   -> RRF fusion of image + text results
+        results = await vec_db.invoke(img_vec=img_vec, text_vec=txt_vec, top_k=top_k)
+        matches = []
+        for match in (results or []):
+            if isinstance(match, dict):
+                matches.append(match)
+            else:
+                matches.append({
+                    "id": getattr(match, "id", ""),
+                    "score": getattr(match, "score", 0.0),
+                    "metadata": getattr(match, "metadata", {})
+                })
+        logging.info(f"retriever_node_v2 - returning {len(matches)} matches")
+        return {"db_res": matches}
+    except Exception as e:
+        logging.error(f"retriever_node_v2 - error during vector query: {e}")
         return {"db_res": []}
 
 @asyncHandler

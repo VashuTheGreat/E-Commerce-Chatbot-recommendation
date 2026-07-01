@@ -302,12 +302,12 @@
         }
 
         // 3. Process Retriever Node Update (db_res)
-        // NOTE: LangGraph registers the node as "retreiver" (see builder.py line 18:
-        //   workflow.add_node("retreiver", retreiver_node))
+        // NOTE: LangGraph registers the node as "retriever_v2" (see builder.py line 30:
+        //   workflow.add_node("retriever_v2", retriever_node_v2))
         // stream_mode="updates" yields chunks keyed by the registered node name.
-        // So the correct key is chunk.retreiver, NOT chunk.retreiver_node.
-        if (chunk.retreiver) {
-          const dbRes = chunk.retreiver.db_res || [];
+        // So the correct key is chunk.retriever_v2, NOT chunk.retreiver.
+        if (chunk.retriever_v2 || chunk.retreiver) {
+          const dbRes = (chunk.retriever_v2 || chunk.retreiver).db_res || [];
           if (dbRes.length > 0) {
             bubble.statusLine.innerHTML = `<span class="spinner"></span> <span>Found ${dbRes.length} matching products. Generating response...</span>`;
 

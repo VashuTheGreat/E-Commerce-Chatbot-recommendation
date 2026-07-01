@@ -1,5 +1,6 @@
 import os
 import logging
+from pydoc import text
 from typing import List
 import pandas as pd
 
@@ -20,7 +21,9 @@ from src.entity.model import MyModel
 from src.entity.config_entity import ModelTrainingConfig, DataIngestionConfig
 from io import BytesIO
 from src.config.app_config import app_config
-from src.constants import TEXT_MODEL_NAME, MODEL_URI
+from src.constants import TEXT_MODEL_NAME, MODEL_URI,INDEX_NAME,NUM_WORKERS
+
+from warnings import deprecated
 
 class InferenceDataSet(Dataset):
     def __init__(self, config, data_path=None, data_frame=None):
@@ -117,14 +120,19 @@ class Vectorizer:
         logging.info("Vectorizer - MLflow model loaded successfully. connecting to Pinecone.")
         self.vec_db = CustomVectorDb(
             api_key=app_config.pine_cone_api_key,
-            index_name="multimodal-search",
-            dimension=self.config.final_feature_output
+            index_name=INDEX_NAME,
+            img_dimension=self.config.image_feature_output,   # 2048 (ResNet-50 raw feats)
+            txt_dimension=self.config.text_feature_output,    # 768  (BERT-style CLS token)
         )
-        logging.info("Vectorizer - Pinecone client and index initialized")
+        logging.info("Vectorizer - Pinecone client and dual indexes initialized")
 
     @asyncHandler
+    @deprecated(
+        "ingest_vec is deprecated — it relies on the old MyModel.predict_emb (single merged embedding). "
+        "Use ingest_vectors instead, which stores image and text embeddings in separate Pinecone indexes."
+    )
     async def ingest_vec(self, override: bool = False):
-        logging.info(f"Vectorizer.ingest_vec - initiating ingestion. override: {override}")
+        logging.info(f"[DEPRECATED] Vectorizer.ingest_vec - initiating ingestion. override: {override}")
         if override:
             logging.warning("Vectorizer.ingest_vec - deleting existing vectors from Pinecone index")
             self.vec_db.delete_all()
@@ -146,9 +154,10 @@ class Vectorizer:
         dataloader = DataLoader(
             dataset,
             batch_size=self.config.batch_size,
-            shuffle=False
+            shuffle=False,
+            num_workers=NUM_WORKERS
         )
-        logging.info("Vectorizer.ingest_vec - starting batch upsert into Pinecone")
+        logging.info("Vectorizer.ingest_vec - starting batch upsert into Pinecone (old single-index approach)")
         self.vec_db.batch_upsert(
             dataloader=dataloader,
             model=self.model
@@ -156,8 +165,53 @@ class Vectorizer:
         logging.info("Vectorizer.ingest_vec - ingestion completed successfully")
 
     @asyncHandler
+    async def ingest_vectors(self, override: bool = False):
+        """Ingest embeddings into the dual Pinecone indexes (image + text).
+
+        ``ImageEncoder`` and ``TextEncoder`` produce the raw feature vectors which
+        are stored independently, allowing ``query()`` to use RRF when both
+        modalities are available at query time.
+        """
+        logging.info(f"Vectorizer.ingest_vectors - initiating dual-index ingestion. override: {override}")
+        if override:
+            logging.warning("Vectorizer.ingest_vectors - clearing both Pinecone indexes")
+            self.vec_db.delete_all()
+        connector = Connect_data(data_path=self.data_path)
+        df = await connector.load_data()
+        if not override:
+            logging.info("Vectorizer.ingest_vectors - retrieving existing vector IDs from Pinecone")
+            existing_ids = set(self.vec_db.get_all_ids())
+            logging.info(f"Vectorizer.ingest_vectors - {len(existing_ids)} IDs already present; skipping those rows")
+            df = df[~df["id"].astype(str).isin(existing_ids)]
+        if df.empty:
+            logging.warning("Vectorizer.ingest_vectors - nothing new to ingest. exiting.")
+            return
+        logging.info(f"Vectorizer.ingest_vectors - encoding {len(df)} samples into dual indexes")
+        dataset = InferenceDataSet(
+            data_frame=df,
+            config=self   # carries image_encoder, text_encoder, transforms, tokenizer
+        )
+        dataloader = DataLoader(
+            dataset,
+            batch_size=self.config.batch_size,
+            shuffle=False,
+            num_workers=NUM_WORKERS
+        )
+        logging.info("Vectorizer.ingest_vectors - calling vec_db.batch_upload")
+        self.vec_db.batch_upload(dataloader=dataloader)
+        logging.info("Vectorizer.ingest_vectors - dual-index ingestion completed successfully")
+
+    @asyncHandler
+    @deprecated("this method is deprecated use invoke instead")
     async def get_similar_data(self, vector: List[float], top_k: int = 5):
         logging.info(f"Vectorizer.get_similar_data - querying Pinecone vector store for top_k: {top_k}")
         res = self.vec_db.search(vector, top_k)
         logging.info(f"Vectorizer.get_similar_data - search complete. response type: {type(res)}")
+        return res
+    
+    @asyncHandler
+    async def invoke(self, img_vec: List[float], text_vec: List[float], top_k: int = 5):
+        logging.info(f"Vectorizer.invoke - querying Pinecone vector store for top_k: {top_k}")
+        res = self.vec_db.query(img_vec,text_vec, top_k)
+        logging.info(f"Vectorizer.invoke - search complete. response type: {type(res)}")
         return res

@@ -1,6 +1,7 @@
 from tqdm.auto import tqdm
 import torch
 import os
+from warnings import deprecated
 from src.models.muti_model import Multimodal
 
 import pandas as pd
@@ -95,6 +96,11 @@ class MyModel:
         return probs
 
         
+    @deprecated(
+        "predict_emb is deprecated. The new dual-index pipeline stores ImageEncoder "
+        "and TextEncoder embeddings separately in Pinecone; use those encoders directly "
+        "instead of calling predict_emb."
+    )
     def predict_emb(self, img_feats, text_feats):
         self.model.eval()
 

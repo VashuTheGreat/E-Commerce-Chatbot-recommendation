@@ -24,7 +24,8 @@ GEMINI_MODEL_NAME = "gemini-2.0-flash"
 DB_FETCH_URL = "http://localhost:7860/api/retreive/"
 PUBLIC_TEMP_DIR = "public"
 
-
+INDEX_NAME = "multimodal-search"
+NUM_WORKERS = 8
 COOKIE_MAX_AGE_SECONDS=60*5
 
 TEXT_MODEL_NAME:str = "sentence-transformers/all-mpnet-base-v2"

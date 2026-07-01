@@ -12,25 +12,25 @@ router = APIRouter()
 
 @router.get("/")
 async def home_page(request: Request):
-    return templates.TemplateResponse(request, "home.html", {})
+    return templates.TemplateResponse("home.html", {"request": request})
 
 
 
 @router.get("/login")
 async def login_page(request: Request):
-    return templates.TemplateResponse(request, "login.html", {})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @router.get("/chat")
 async def chat_page(request: Request):
-    return templates.TemplateResponse(request, "chat.html", {})
+    return templates.TemplateResponse("chat.html", {"request": request})
 
 
 @router.get("/train")
 async def train_page(request: Request):
-    return templates.TemplateResponse(request, "train.html", {})
+    return templates.TemplateResponse("train.html", {"request": request})
 
 
 @router.get("/health")
 async def health_page(request: Request):
-    return templates.TemplateResponse(request, "health.html", {})
+    return templates.TemplateResponse("health.html", {"request": request})
