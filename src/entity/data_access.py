@@ -32,7 +32,7 @@ class Connect_data:
         logging.info("Entered in the connect db")
         data = self.data
         logging.info("Exited from the connect db")
-        data = data.sample(n=1000, random_state=42)
+        data = data.sample(n=4480, random_state=42)
         return data
 
         

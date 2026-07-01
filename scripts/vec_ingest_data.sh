@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Starting Vector Storing"
-echo "Ingesting data to vector db pinecone......."
+echo "Starting Vector Storing (dual-index mode)"
+echo "Ingesting image + text embeddings into separate Pinecone indexes..."
 
 cd "$(dirname "$0")/.." || exit 1
 
@@ -22,7 +22,11 @@ async def main():
             override = sys.argv[idx + 1].lower() in ('true', '1', 'yes')
         else:
             override = True
-    await Vectorizer().ingest_vec(override=override)
+    # ingest_vectors: new dual-index approach
+    # ImageEncoder -> image Pinecone index
+    # TextEncoder  -> text  Pinecone index
+    # (ingest_vec is deprecated - used old MyModel.predict_emb single merged embedding)
+    await Vectorizer().ingest_vectors(override=override)
 
 asyncio.run(main())
 " "$@"

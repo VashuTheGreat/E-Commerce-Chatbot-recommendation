@@ -1,7 +1,13 @@
 import logging
 from langgraph.graph import START, END, StateGraph
 from src.models.agent_models import State
-from src.nodes.agents_nodes import orchestrator, chat, retreiver_node, tools
+from src.nodes.agents_nodes import (
+    orchestrator,
+    chat,
+    retreiver_node,
+    retriever_node_v2,
+    tools,
+)
 from langgraph.prebuilt import ToolNode, tools_condition
 from src.memmory import memory
 from src.utils.asyncHandler import asyncHandler
@@ -14,8 +20,15 @@ logging.info("Adding orchestrator node")
 workflow.add_node("orchestrator", orchestrator)
 logging.info("Adding chat node")
 workflow.add_node("chat", chat)
-logging.info("Adding retreiver node")
+
+# ── [DEPRECATED] old single-index retriever ─────────────────────────────────
+logging.info("Adding retreiver node (deprecated, kept for backward compatibility)")
 workflow.add_node("retreiver", retreiver_node)
+
+# ── New dual-index retriever (image index + text index, fused with RRF) ──────
+logging.info("Adding retriever_v2 node")
+workflow.add_node("retriever_v2", retriever_node_v2)
+
 logging.info("Adding tools node")
 workflow.add_node("tools", ToolNode(tools))
 
@@ -33,12 +46,17 @@ workflow.add_conditional_edges(
     route_orchestrator,
     {
         "chat_node": "chat",
-        "retreiver_node": "retreiver"
+        # Route to the new dual-index retriever
+        # (old 'retreiver' node kept registered but no longer the default target)
+        "retreiver_node": "retriever_v2"
     }
 )
 
-logging.info("Adding edge from retreiver to chat")
+# Both retriever nodes feed into chat
+logging.info("Adding edge from retreiver (deprecated) to chat")
 workflow.add_edge("retreiver", "chat")
+logging.info("Adding edge from retriever_v2 to chat")
+workflow.add_edge("retriever_v2", "chat")
 
 logging.info("Adding conditional edges from chat to tools or END")
 workflow.add_conditional_edges(
