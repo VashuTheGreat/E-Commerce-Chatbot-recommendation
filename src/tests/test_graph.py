@@ -43,8 +43,17 @@ async def test_graph_runner_pipeline_casual_chat():
         mock_chat_output.ainvoke.assert_called_once()
 
 
+@pytest.mark.skip(
+    reason=(
+        "Written against the deprecated retreiver_node which used "
+        "vectorizer.get_similar_data() + MyModel.predict_emb(). "
+        "The active node is now retriever_node_v2 which calls "
+        "vectorizer.invoke() directly. Update this test for the new node."
+    )
+)
 @pytest.mark.asyncio
 async def test_graph_runner_pipeline_retrieval():
+
     """Test that GraphRunnerPipeline correctly routes to retriever, queries vector db, and returns recommendations."""
     # Configure mock LLM response for orchestrator (routes to retreiver)
     mock_structured_output = AsyncMock()
@@ -95,3 +104,56 @@ async def test_graph_runner_pipeline_retrieval():
         mock_vectorizer_inst.get_similar_data.assert_called_once()
         mock_mymodel_inst.predict_emb.assert_called_once()
         mock_chat_output.ainvoke.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_graph_runner_pipeline_retrieval_v2():
+    """Test that GraphRunnerPipeline correctly routes to retriever_node_v2,
+    calls vectorizer.invoke(), and returns product recommendations."""
+
+    # ── Orchestrator: route to retriever ────────────────────────────────
+    mock_structured_output = AsyncMock()
+    mock_structured_output.ainvoke.return_value = Orchastrator_Output(
+        redirect_to="retreiver_node",
+        querie="blue jeans"
+    )
+
+    # ── Chat: final recommendation response ─────────────────────────────
+    mock_chat_output = AsyncMock()
+    mock_chat_output.ainvoke.return_value = AIMessage(
+        content="I found these Sleek Blue Jeans for you."
+    )
+
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output.return_value = mock_structured_output
+    mock_llm.bind_tools.return_value = mock_chat_output
+
+    # ── Vectorizer mock: invoke() returns list of plain dicts (retriever_node_v2 format) ──
+    mock_vectorizer_inst = MagicMock()
+    mock_vectorizer_inst.invoke = AsyncMock(return_value=[
+        {
+            "id": "101",
+            "score": 0.95,
+            "metadata": {"name": "Sleek Blue Jeans", "price": 1200.0}
+        }
+    ])
+
+    with patch("src.nodes.agents_nodes.llm", mock_llm), \
+         patch("src.nodes.agents_nodes.vectorizer", return_value=mock_vectorizer_inst), \
+         patch("src.nodes.agents_nodes._get_text_feat", return_value=torch.zeros((1, 768))), \
+         patch("src.nodes.agents_nodes._get_image_feat", return_value=torch.zeros((1, 2048))):
+
+        pipeline = GraphRunnerPipeline()
+
+        chunks = []
+        async for chunk in pipeline.initiate(thread_id="test_thread_v2", query="Show me blue jeans"):
+            chunks.append(chunk)
+
+        assert len(chunks) > 0
+
+        # retriever_node_v2 must have called invoke() once
+        mock_vectorizer_inst.invoke.assert_called_once()
+
+        # chat LLM must have been invoked for the final response
+        mock_chat_output.ainvoke.assert_called_once()
+
