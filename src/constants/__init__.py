@@ -24,12 +24,15 @@ GEMINI_MODEL_NAME = "gemini-2.0-flash"
 DB_FETCH_URL = "http://localhost:7860/api/retreive/"
 PUBLIC_TEMP_DIR = "public"
 
+
+IMAGE_ANALYSIS_MODEL_NAME = "Salesforce/blip-image-captioning-base"
 INDEX_NAME = "multimodal-search"
 NUM_WORKERS = 8
 COOKIE_MAX_AGE_SECONDS=60*5
+
+TEXT_IMAGE_ANALYSIS_PROMPT = """Describe this product image in detail for an e-commerce search system. Include: product type, dominant colors, brand (if visible), material or fabric, style, gender (men/women/unisex/boys/girls), category (apparel/footwear/accessories/etc.), subcategory, season suitability, usage (casual/formal/sports/ethnic), and any other visible attributes. Be specific and concise."""
 
 TEXT_MODEL_NAME:str = "sentence-transformers/all-mpnet-base-v2"
 MODEL_URI:str = "models:/E-Commerce-Recommendation_Model/1"
 import torch
 DEVICE:str = "cuda" if torch.cuda.is_available() else "cpu"
-
