@@ -138,6 +138,10 @@ class Vectorizer:
             self.vec_db.delete_all()
         connector = Connect_data(data_path=self.data_path)
         df = await connector.load_data()
+
+        # cleaning data
+        df.dropna(inplace=True)
+
         if not override:
             logging.info("Vectorizer.ingest_vec - retrieving existing vector IDs from Pinecone")
             existing_ids = set(self.vec_db.get_all_ids())
@@ -178,6 +182,8 @@ class Vectorizer:
             self.vec_db.delete_all()
         connector = Connect_data(data_path=self.data_path)
         df = await connector.load_data()
+        df.dropna(inplace=True)
+        
         if not override:
             logging.info("Vectorizer.ingest_vectors - retrieving existing vector IDs from Pinecone")
             existing_ids = set(self.vec_db.get_all_ids())
