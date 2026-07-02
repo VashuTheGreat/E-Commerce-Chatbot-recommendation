@@ -7,6 +7,7 @@ from src.nodes.agents_nodes import (
     retreiver_node,
     retriever_node_v2,
     tools,
+    analyse_image_node
 )
 from langgraph.prebuilt import ToolNode, tools_condition
 from src.memmory import memory
@@ -21,6 +22,8 @@ workflow.add_node("orchestrator", orchestrator)
 logging.info("Adding chat node")
 workflow.add_node("chat", chat)
 
+workflow.add_node("analyse_image_node", analyse_image_node)
+
 # ── [DEPRECATED] old single-index retriever ─────────────────────────────────
 logging.info("Adding retreiver node (deprecated, kept for backward compatibility)")
 workflow.add_node("retreiver", retreiver_node)
@@ -32,8 +35,26 @@ workflow.add_node("retriever_v2", retriever_node_v2)
 logging.info("Adding tools node")
 workflow.add_node("tools", ToolNode(tools))
 
-logging.info("Adding edge from START to orchestrator")
-workflow.add_edge(START, "orchestrator")
+# ── START: if image uploaded → analyse first, else → orchestrator directly ────
+def route_start(state):
+    if state.get("image_path") and state.get("img_caption") is None:
+        logging.info("route_start: image present and not yet captioned → analyse_image_node")
+        return "analyse_image_node"
+    logging.info("route_start: no image (or already captioned) → orchestrator")
+    return "orchestrator"
+
+logging.info("Adding conditional edge from START")
+workflow.add_conditional_edges(
+    START,
+    route_start,
+    {
+        "analyse_image_node": "analyse_image_node",
+        "orchestrator": "orchestrator",
+    }
+)
+
+# analyse_image_node always feeds into orchestrator (caption is ready by then)
+workflow.add_edge("analyse_image_node", "orchestrator")
 
 def route_orchestrator(state):
     target = state.get("redirect_to", "chat_node")
@@ -48,7 +69,7 @@ workflow.add_conditional_edges(
         "chat_node": "chat",
         # Route to the new dual-index retriever
         # (old 'retreiver' node kept registered but no longer the default target)
-        "retreiver_node": "retriever_v2"
+        "retreiver_node": "retriever_v2",
     }
 )
 

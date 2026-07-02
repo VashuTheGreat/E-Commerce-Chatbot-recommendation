@@ -3,7 +3,7 @@ import torch
 import cv2
 import logging
 from warnings import deprecated
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
 from src.models.agent_models import Orchastrator_Output
 from src.llm.llm_loader import llm
 from src.prompts import ORCHESTRATOR_SYSTEM_PROMPT, CHAT_LLM_PROMPT
@@ -15,7 +15,7 @@ from src.core.dependencies import get_img_transformer, image_encoder_eval
 from src.core.dependencies import text_encoder_eval, text_tokenizer
 from src.core.dependencies import my_model, vectorizer, df_schema
 from src.prompts import ORCHESTRATOR_SYSTEM_PROMPT, CHAT_LLM_PROMPT, COLUMN_DESCRIPTIONS, CATEGORY_COLUMN_HINT
-
+from src.utils.main_utils import analyse_image
 tools = [code_runner]
 
 @asyncHandler
@@ -23,8 +23,22 @@ async def orchestrator(state: State) -> State:
     logging.info("orchestrator - entered node")
     logging.info(f"orchestrator - input state keys: {list(state.keys())}")
     system_msg = SystemMessage(content=ORCHESTRATOR_SYSTEM_PROMPT)
-    image_uploaded = True if state.get("image_path") else False
-    messages = [system_msg] + state["messages"] + [f"image_uploaded: {image_uploaded}"]
+    image_uploaded = bool(state.get("image_path"))
+    img_caption = state.get('img_caption') or ''
+
+    # Build a dedicated context message so the LLM sees image info clearly
+    image_context_lines = [f"image_uploaded: {image_uploaded}"]
+    if img_caption:
+        image_context_lines.append(
+            f"image_caption: {img_caption}\n\n"
+            "IMPORTANT: An image caption is available. Use EVERY product attribute "
+            "(type, color, brand, gender, category, material, style, season, etc.) "
+            "from the caption to build a detailed, attribute-rich search query. "
+            "Do NOT produce vague queries like 'similar item'."
+        )
+    image_context_msg = HumanMessage(content="\n".join(image_context_lines))
+
+    messages = [system_msg] + state["messages"] + [image_context_msg]
     logging.info(f"orchestrator - total messages to invoke: {len(messages)}")
     llm_structured = llm.with_structured_output(Orchastrator_Output)
     logging.info("orchestrator - invoking LLM with structured output")
@@ -81,6 +95,24 @@ def _get_text_feat(text, config, device):
         txt_feat = text_encoder(tokens["input_ids"], tokens["attention_mask"])
     logging.info(f"exiting _get_text_feat with shape: {txt_feat.shape}")
     return txt_feat
+
+
+
+@asyncHandler
+async def analyse_image_node(state: State):
+    logging.info("entering analyse_image_node")
+    image_path = state['image_path']
+    logging.info(f"analyse_image_node - current message history length: {len(state['messages'])}")
+    caption = await analyse_image(image_path=image_path)
+    logging.info(f"analyse_image_node - LLM response received: {caption}")
+    # Append caption as an AIMessage so it lives in conversation history.
+    # This ensures orchestrator AND chat node always know what image was uploaded,
+    # even in follow-up turns where image_path is no longer sent.
+    caption_msg = AIMessage(content=f"[Image Analysis] The user uploaded an image. Here is the detailed analysis:\n{caption}")
+    return {
+        "img_caption": caption,
+        "messages": [caption_msg],
+    }
 
 @asyncHandler
 @deprecated(
@@ -233,6 +265,7 @@ async def chat(state: State):
     else:
         system_content = f"{CHAT_LLM_PROMPT}{schema_block}"
         logging.info("chat - using standard system prompt with dataset schema")
+
     messages = [SystemMessage(content=system_content)] + messages
     llm_with_tools = llm.bind_tools(tools=tools)
     logging.info("chat - invoking LLM with bound tools")

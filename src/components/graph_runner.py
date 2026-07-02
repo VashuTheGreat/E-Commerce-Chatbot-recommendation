@@ -23,7 +23,11 @@ class GraphRunner:
             "redirect_to": "",
             "query_for_db_search": "",
             "image_summary": "",
-            "llm_query": ""
+            "llm_query": "",
+            # Only reset img_caption when no image is being uploaded.
+            # If image_path is set, omit it so analyse_image_node writes it fresh.
+            # If no image, restore None only on truly fresh threads (checkpoint handles the rest).
+            **({"img_caption": None} if not image_path else {}),
         }
         logging.info(f"GraphRunner - initial state prepared: {initial_state}")
 

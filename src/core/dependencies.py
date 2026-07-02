@@ -9,7 +9,8 @@ from src.models.muti_model import ImageEncoder,TextEncoder
 import torch
 from src.constants import TEXT_MODEL_NAME
 from src.config.app_config import app_config
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, BlipProcessor, BlipForConditionalGeneration
+from src.constants import IMAGE_ANALYSIS_MODEL_NAME
 import logging
 import pandas as pd
 
@@ -70,7 +71,22 @@ def df_schema() -> dict:
 
 
 
-# loading all the heavy files before the system statts
+@lru_cache
+def blip_processor() -> BlipProcessor:
+    logging.info(f"[BLIP] Loading processor '{IMAGE_ANALYSIS_MODEL_NAME}'…")
+    return BlipProcessor.from_pretrained(IMAGE_ANALYSIS_MODEL_NAME)
+
+
+@lru_cache
+def blip_model() -> BlipForConditionalGeneration:
+    logging.info(f"[BLIP] Loading model '{IMAGE_ANALYSIS_MODEL_NAME}'…")
+    return BlipForConditionalGeneration.from_pretrained(
+        IMAGE_ANALYSIS_MODEL_NAME,
+        low_cpu_mem_usage=True,
+    )
+
+
+# loading all the heavy files before the system starts
 _ = my_model()
 _ = vectorizer()
 _ = get_img_transformer()
@@ -79,3 +95,5 @@ _ = text_encoder_eval()
 _ = text_tokenizer()
 _ = connect_data()
 _ = df_schema()
+_ = blip_processor()
+_ = blip_model()
