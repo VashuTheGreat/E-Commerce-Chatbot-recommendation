@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exact Match · Aura AI</title>
+  <meta name="description"
+    content="Upload an image, draw around any region, and find visually similar products instantly.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg2: #1e293b;
+      --bg3: #0d1526;
+      --border: rgba(51, 65, 85, .8);
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --gold: #f59e0b;
+      --green: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    nav {
+      background: rgba(15, 23, 42, .85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: .75rem 1.5rem;
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      text-decoration: none;
+    }
+
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      font-size: .9rem;
+    }
+
+    .logo-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .logo-text span {
+      color: var(--accent2);
+      font-weight: 500;
+      font-size: .9rem;
+    }
+
+    .nav-links {
+      margin-left: auto;
+      display: flex;
+      gap: .75rem;
+    }
+
+    .nbtn {
+      padding: .45rem 1rem;
+      border-radius: 8px;
+      font-size: .8rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all .2s;
+    }
+
+    .nbtn-ghost {
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .nbtn-ghost:hover {
+      border-color: var(--accent2);
+      color: #fff;
+    }
+
+    .nbtn-pri {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .nbtn-pri:hover {
+      background: #4f46e5;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .page-hero {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .page-hero h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: .75rem;
+    }
+
+    .page-hero h1 span {
+      background: linear-gradient(135deg, #a5b4fc, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .page-hero p {
+      color: var(--muted);
+      font-size: .95rem;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media(max-width:768px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* UPLOAD ZONE */
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: .9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: .9rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .panel-header .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .panel-body {
+      padding: 1.25rem;
+    }
+
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 3rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+    }
+
+    #drop-zone.drag {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, .05);
+    }
+
+    #drop-zone.has-img {
+      padding: 0;
+      border-style: solid;
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    .drop-icon {
+      font-size: 2.5rem;
+      margin-bottom: .75rem;
+    }
+
+    .drop-text {
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+
+    .drop-text strong {
+      color: var(--accent2);
+    }
+
+    /* CANVAS */
+    #canvas-wrap {
+      position: relative;
+      display: none;
+      width: 100%;
+    }
+
+    #canvas-wrap.show {
+      display: block;
+    }
+
+    #main-canvas {
+      display: block;
+      width: 100%;
+      border-radius: 12px;
+      cursor: crosshair;
+    }
+
+    .canvas-tools {
+      display: flex;
+      gap: .5rem;
+      padding: .75rem 0 0;
+    }
+
+    .tool-btn {
+      padding: .4rem .9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+
+    .tool-btn:hover {
+      border-color: var(--accent2);
+      color: #fff;
+    }
+
+    .tool-btn.active {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, .15);
+      color: var(--accent2);
+    }
+
+    /* INSTRUCTIONS */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, .2);
+      border: 1px solid rgba(99, 102, 241, .4);
+      color: var(--accent2);
+      font-size: .7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-text {
+      font-size: .82rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .step-text strong {
+      color: var(--text);
+    }
+
+    .find-btn {
+      width: 100%;
+      padding: .85rem;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: inherit;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+    }
+
+    .find-btn:hover {
+      opacity: .9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, .3);
+    }
+
+    .find-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* RESULTS */
+    #results-section {
+      margin-top: 2rem;
+      display: none;
+    }
+
+    #results-section.show {
+      display: block;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .results-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .results-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 18px;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .results-count {
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    #results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .res-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all .25s;
+    }
+
+    .res-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 12px 30px rgba(99, 102, 241, .15);
+    }
+
+    .res-img {
+      aspect-ratio: 1;
+      object-fit: cover;
+      width: 100%;
+      background: #1a2540;
+    }
+
+    .res-body {
+      padding: .75rem;
+    }
+
+    .res-brand {
+      font-size: .65rem;
+      color: var(--accent2);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .res-name {
+      font-size: .82rem;
+      font-weight: 600;
+      margin: .2rem 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .res-price {
+      font-size: .9rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .res-score {
+      display: inline-block;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      background: rgba(99, 102, 241, .2);
+      border: 1px solid rgba(99, 102, 241, .4);
+      border-radius: 999px;
+      color: var(--accent2);
+      margin-top: .3rem;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 2rem auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .empty-res {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-box">A</div>
+        <span class="logo-text">Aura <span>AI</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="/shop" class="nbtn nbtn-ghost">🛍️ Browse Shop</a>
+        <a href="/login" class="nbtn nbtn-pri">AI Chatbot</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="page-hero">
+      <h1>Find Products by <span>Image Region</span></h1>
+      <p>Upload any image, draw around the part you want to match, and our AI will find visually similar products.</p>
+    </div>
+
+    <div class="two-col">
+      <!-- LEFT: canvas editor -->
+      <div class="panel">
+        <div class="panel-header"><span class="dot"></span>Image Editor</div>
+        <div class="panel-body">
+          <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+            <div class="drop-icon">🖼️</div>
+            <div class="drop-text"><strong>Click or drag & drop</strong><br>any image (PNG, JPG, WEBP)</div>
+          </div>
+          <input type="file" id="file-input" accept="image/*">
+
+          <div id="canvas-wrap">
+            <canvas id="main-canvas"></canvas>
+            <div class="canvas-tools">
+              <button class="tool-btn active" id="tool-lasso" onclick="setTool('lasso')">✏️ Lasso</button>
+              <button class="tool-btn" id="tool-rect" onclick="setTool('rect')">▭ Rectangle</button>
+              <button class="tool-btn" id="btn-clear" onclick="clearSelection()">🗑️ Clear</button>
+              <button class="tool-btn" id="btn-reset" onclick="resetImage()" style="margin-left:auto">↺ New
+                Image</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: instructions + submit -->
+      <div class="panel">
+        <div class="panel-header"><span class="dot"></span>How to Use</div>
+        <div class="panel-body">
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-text"><strong>Upload an image</strong> — drag & drop or click to browse from your device.
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-text"><strong>Draw a region</strong> — use the Lasso or Rectangle tool to highlight the
+                product area you care about.</div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-text"><strong>Click Find Matches</strong> — the cropped region is sent to our AI for
+                visual similarity search.</div>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-text"><strong>Browse results</strong> — click any result to explore the full product
+                details.</div>
+            </div>
+          </div>
+
+          <div id="selection-info" style="font-size:.8rem;color:var(--muted);min-height:1.2rem;margin-bottom:.5rem;">
+          </div>
+
+          <button class="find-btn" id="find-btn" disabled onclick="findMatches()">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            Find Similar Products
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-section">
+      <div class="results-header">
+        <div class="results-title">Similar Products Found</div>
+        <div class="results-count" id="results-count"></div>
+      </div>
+      <div id="results-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/v1/products';
+    let tool = 'lasso';
+    let sourceImg = null;
+    let naturalW = 0, naturalH = 0;
+    let isDrawing = false;
+    let startX, startY;
+    let lassoPoints = [];
+    let rectSel = null; // {x,y,w,h} in canvas coords
+
+    const canvas = document.getElementById('main-canvas');
+    const ctx = canvas.getContext('2d');
+    const dropZone = document.getElementById('drop-zone');
+    const canvasWrap = document.getElementById('canvas-wrap');
+
+    // ── file handling ─────────────────────────────────────────────────────────
+    function loadFile(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = e => initCanvas(e.target.result);
+      reader.readAsDataURL(file);
+    }
+
+    document.getElementById('file-input').addEventListener('change', e => loadFile(e.target.files[0]));
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); loadFile(e.dataTransfer.files[0]); });
+
+    function initCanvas(src) {
+      sourceImg = new Image();
+      sourceImg.onload = () => {
+        naturalW = sourceImg.naturalWidth;
+        naturalH = sourceImg.naturalHeight;
+        const maxW = canvasWrap.parentElement.clientWidth - 48;
+        const scale = Math.min(1, maxW / naturalW);
+        canvas.width = Math.round(naturalW * scale);
+        canvas.height = Math.round(naturalH * scale);
+        drawBase();
+        dropZone.style.display = 'none';
+        canvasWrap.classList.add('show');
+        clearSelection();
+      };
+      sourceImg.src = src;
+    }
+
+    function drawBase() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(sourceImg, 0, 0, canvas.width, canvas.height);
+    }
+
+    function resetImage() {
+      dropZone.style.display = '';
+      canvasWrap.classList.remove('show');
+      document.getElementById('file-input').value = '';
+      sourceImg = null; lassoPoints = []; rectSel = null;
+      document.getElementById('find-btn').disabled = true;
+      document.getElementById('selection-info').textContent = '';
+      document.getElementById('results-section').classList.remove('show');
+    }
+
+    // ── tool selection ────────────────────────────────────────────────────────
+    function setTool(t) {
+      tool = t;
+      document.getElementById('tool-lasso').classList.toggle('active', t === 'lasso');
+      document.getElementById('tool-rect').classList.toggle('active', t === 'rect');
+      clearSelection();
+    }
+
+    function clearSelection() {
+      lassoPoints = []; rectSel = null;
+      drawBase();
+      document.getElementById('find-btn').disabled = true;
+      document.getElementById('selection-info').textContent = sourceImg ? 'Draw a region on the image.' : '';
+    }
+
+    // ── canvas drawing ─────────────────────────────────────────────────────────
+    function getPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: (clientX - r.left) * (canvas.width / r.width), y: (clientY - r.top) * (canvas.height / r.height) };
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', duringDraw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); duringDraw(e); }, { passive: false });
+    canvas.addEventListener('touchend', e => { e.preventDefault(); endDraw(e); }, { passive: false });
+
+    function startDraw(e) {
+      if (!sourceImg) return;
+      const pos = getPos(e);
+      isDrawing = true;
+      if (tool === 'lasso') { lassoPoints = [pos]; }
+      else { startX = pos.x; startY = pos.y; rectSel = null; }
+    }
+
+    function duringDraw(e) {
+      if (!isDrawing) return;
+      const pos = getPos(e);
+      drawBase();
+      ctx.save();
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 3]);
+      if (tool === 'lasso') {
+        lassoPoints.push(pos);
+        ctx.beginPath();
+        ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+        lassoPoints.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+        // fill highlight
+        ctx.fillStyle = 'rgba(99,102,241,0.18)';
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        const w = pos.x - startX, h = pos.y - startY;
+        ctx.strokeRect(startX, startY, w, h);
+        ctx.fillStyle = 'rgba(99,102,241,0.18)';
+        ctx.fillRect(startX, startY, w, h);
+      }
+      ctx.restore();
+    }
+
+    function endDraw(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
+      if (tool === 'rect') {
+        const pos = getPos(e.changedTouches ? { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY } : e);
+        rectSel = {
+          x: Math.min(startX, pos.x), y: Math.min(startY, pos.y),
+          w: Math.abs(pos.x - startX), h: Math.abs(pos.y - startY)
+        };
+      }
+      const hasSelection = tool === 'lasso' ? lassoPoints.length > 5 : (rectSel && rectSel.w > 5 && rectSel.h > 5);
+      document.getElementById('find-btn').disabled = !hasSelection;
+      document.getElementById('selection-info').textContent = hasSelection ? '✅ Region selected — ready to search!' : 'Region too small. Try again.';
+    }
+
+    // ── crop selected region ───────────────────────────────────────────────────
+    function getCroppedBlob() {
+      return new Promise(resolve => {
+        const tmp = document.createElement('canvas');
+        const scaleX = naturalW / canvas.width;
+        const scaleY = naturalH / canvas.height;
+
+        if (tool === 'rect' && rectSel) {
+          tmp.width = Math.round(rectSel.w * scaleX);
+          tmp.height = Math.round(rectSel.h * scaleY);
+          const tc = tmp.getContext('2d');
+          tc.drawImage(sourceImg,
+            rectSel.x * scaleX, rectSel.y * scaleY,
+            rectSel.w * scaleX, rectSel.h * scaleY,
+            0, 0, tmp.width, tmp.height);
+        } else {
+          // Lasso: get bounding box of points
+          const xs = lassoPoints.map(p => p.x * scaleX);
+          const ys = lassoPoints.map(p => p.y * scaleY);
+          const x0 = Math.max(0, Math.min(...xs)), y0 = Math.max(0, Math.min(...ys));
+          const x1 = Math.min(naturalW, Math.max(...xs)), y1 = Math.min(naturalH, Math.max(...ys));
+          tmp.width = Math.round(x1 - x0); tmp.height = Math.round(y1 - y0);
+          const tc = tmp.getContext('2d');
+          // clip to lasso shape
+          tc.save();
+          tc.beginPath();
+          lassoPoints.forEach((p, i) => {
+            const px = p.x * scaleX - x0, py = p.y * scaleY - y0;
+            i === 0 ? tc.moveTo(px, py) : tc.lineTo(px, py);
+          });
+          tc.closePath(); tc.clip();
+          tc.drawImage(sourceImg, -x0, -y0);
+          tc.restore();
+        }
+        tmp.toBlob(resolve, 'image/png');
+      });
+    }
+
+    // ── submit ────────────────────────────────────────────────────────────────
+    async function findMatches() {
+      const btn = document.getElementById('find-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner" style="margin:0;width:20px;height:20px;border-width:2px"></div> Searching…';
+
+      const section = document.getElementById('results-section');
+      const grid = document.getElementById('results-grid');
+      section.classList.add('show');
+      grid.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const blob = await getCroppedBlob();
+        const form = new FormData();
+        form.append('file', new File([blob], 'crop.png', { type: 'image/png' }));
+
+        const res = await fetch(`${API}/similar-products-im`, { method: 'POST', body: form });
+        const data = await res.json();
+
+        if (!data.data || data.data.length === 0) {
+          grid.innerHTML = '<div class="empty-res">No matching products found. Try a different region.</div>';
+        } else {
+          document.getElementById('results-count').textContent = `${data.data.length} results`;
+          grid.innerHTML = data.data.map(item => {
+            const m = item.metadata || {};
+            const score = item.score ? (item.score * 100).toFixed(1) : '';
+            const iid = item.id || m.id || '';
+            const iurl = m.image_url || item.image_url || '';
+            const iname = m.name || item.name || '';
+            const ibrand = m.brand || item.brand || '';
+            const iprice = m.discounted_price || item.discounted_price || m.price || item.price || '';
+            return `
+          <div class="res-card" onclick="window.open('/product/${iid}','_self')">
+            <img class="res-img" src="${iurl}" alt="${iname}" loading="lazy" onerror="this.style.opacity='.3'">
+            <div class="res-body">
+              ${ibrand ? `<div class="res-brand">${ibrand}</div>` : ''}
+              <div class="res-name">${iname || 'Product'}</div>
+              <div class="res-price">${iprice ? '₹' + Number(iprice).toLocaleString('en-IN') : ''}</div>
+              ${score ? `<div class="res-score">Match ${score}%</div>` : ''}
+            </div>
+          </div>`;
+          }).join('');
+        }
+      } catch (err) {
+        grid.innerHTML = '<div class="empty-res">Error fetching results. Please try again.</div>';
+        console.error(err);
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Find Similar Products';
+    }
+  </script>
+</body>
+
+</html>

@@ -1,6 +1,5 @@
 from pathlib import Path
 from fastapi import APIRouter
-from fastapi.responses import RedirectResponse
 from fastapi.requests import Request
 from fastapi.templating import Jinja2Templates
 
@@ -45,3 +44,25 @@ async def health_page(request: Request):
     return templates.TemplateResponse(request=request,
     name="health.html",
     context={})
+
+
+@router.get("/shop")
+async def shop_page(request: Request):
+    return templates.TemplateResponse(request=request,
+    name="shop.html",
+    context={})
+
+
+@router.get("/exact-match")
+async def exact_match_page(request: Request):
+    return templates.TemplateResponse(request=request,
+    name="exact_match.html",
+    context={})
+
+
+@router.get("/product/{product_id}")
+async def product_page(request: Request, product_id: int):
+    return templates.TemplateResponse(request=request,
+    name="product.html",
+    context={"product_id": product_id})
+
