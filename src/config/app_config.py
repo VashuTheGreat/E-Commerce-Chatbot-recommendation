@@ -22,3 +22,4 @@ def getAppConfig() -> AppConfig:
     return AppConfig()
 
 app_config: AppConfig = getAppConfig()
+

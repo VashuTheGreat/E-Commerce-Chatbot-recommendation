@@ -69,7 +69,13 @@ def df_schema() -> dict:
     }
     
 
-
+@lru_cache
+def data_frame() -> dict:
+    logging.info("df_schema - cache miss. loading csv from %s", DATA_PATH)
+    df = pd.read_csv(DATA_PATH)
+    # df = df[:10]
+    return df
+    
 
 @lru_cache
 def blip_processor() -> BlipProcessor:
@@ -97,3 +103,4 @@ _ = connect_data()
 _ = df_schema()
 _ = blip_processor()
 _ = blip_model()
+_ = data_frame()

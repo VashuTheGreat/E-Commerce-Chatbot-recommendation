@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop · Aura AI</title>
+  <meta name="description" content="Browse our AI-powered product catalog. Search, explore, and discover similar items using multimodal AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a; --bg2: #1e293b; --bg3: #0d1526;
+      --border: rgba(51,65,85,0.8); --accent: #6366f1;
+      --accent2: #818cf8; --muted: #94a3b8; --text: #e2e8f0;
+      --gold: #f59e0b; --green: #10b981; --red: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    nav { background: rgba(15,23,42,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; padding: 0.75rem 1.5rem; }
+    .nav-inner { max-width: 1400px; margin: auto; display: flex; align-items: center; gap: 1rem; }
+    .logo { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+    .logo-box { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 0.9rem; }
+    .logo-text { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .logo-text span { color: var(--accent2); font-weight: 500; font-size: 0.9rem; }
+    .search-wrap { flex: 1; max-width: 600px; position: relative; }
+    #search-input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color .2s; }
+    #search-input:focus { border-color: var(--accent); }
+    .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .nav-links { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
+    .nav-btn { padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; text-decoration: none; transition: all .2s; }
+    .nav-btn-ghost { border: 1px solid var(--border); color: var(--muted); }
+    .nav-btn-ghost:hover { border-color: var(--accent2); color: #fff; }
+    .nav-btn-primary { background: var(--accent); color: #fff; }
+    .nav-btn-primary:hover { background: #4f46e5; }
+
+    /* LAYOUT */
+    .page { max-width: 1400px; margin: auto; padding: 1.5rem; }
+
+    /* CATEGORY PILLS */
+    .cats { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1.5rem; scrollbar-width: none; }
+    .cats::-webkit-scrollbar { display: none; }
+    .cat-pill { padding: 0.35rem 1rem; border-radius: 999px; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .2s; }
+    .cat-pill:hover, .cat-pill.active { border-color: var(--accent); color: #fff; background: rgba(99,102,241,0.15); }
+
+    /* GRID */
+    .grid-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .grid-title { font-size: 1rem; font-weight: 600; color: var(--muted); }
+    #product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+
+    /* CARD */
+    .prod-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all .25s; position: relative; }
+    .prod-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 16px 40px rgba(99,102,241,.15); }
+    .card-img-wrap { position: relative; aspect-ratio: 1; background: #1a2540; overflow: hidden; }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+    .prod-card:hover .card-img-wrap img { transform: scale(1.05); }
+    .card-badge { position: absolute; top: 8px; left: 8px; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--green); color: #fff; }
+    .card-body { padding: 0.75rem; }
+    .card-brand { font-size: 0.7rem; color: var(--accent2); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+    .card-name { font-size: 0.85rem; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 0.4rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-price { font-size: 1rem; font-weight: 700; color: #fff; }
+    .card-price-original { font-size: 0.75rem; color: var(--muted); text-decoration: line-through; margin-left: 0.35rem; }
+    .card-stars { display: flex; gap: 1px; margin-top: 0.4rem; }
+    .star { color: var(--gold); font-size: 0.7rem; }
+
+    /* SKELETON */
+    .skeleton { background: linear-gradient(90deg, var(--bg2) 25%, #253047 50%, var(--bg2) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skel-card { aspect-ratio: 0.75; }
+
+    /* LOAD MORE */
+    #load-more { display: block; margin: 2rem auto 0; padding: 0.7rem 2.5rem; background: var(--bg2); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; font-family: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+    #load-more:hover { border-color: var(--accent); color: #fff; }
+    #load-more:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* DRAWER OVERLAY */
+    #drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); z-index: 200; }
+    #drawer-overlay.open { display: block; }
+
+    /* DRAWER */
+    #drawer { position: fixed; top: 0; right: -100%; width: min(560px, 100vw); height: 100vh; background: var(--bg3); border-left: 1px solid var(--border); z-index: 201; transition: right .35s cubic-bezier(.4,0,.2,1); overflow-y: auto; }
+    #drawer.open { right: 0; }
+    .drawer-close { position: sticky; top: 0; z-index: 10; background: var(--bg3); border-bottom: 1px solid var(--border); padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-close-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+    .drawer-close-btn:hover { background: var(--bg2); color: #fff; }
+    .drawer-body { padding: 1.25rem; }
+    .drawer-img { width: 100%; max-height: 300px; object-fit: contain; border-radius: 12px; background: #1a2540; border: 1px solid var(--border); }
+    .drawer-brand { font-size: 0.75rem; color: var(--accent2); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-top: 1rem; }
+    .drawer-name { font-size: 1.4rem; font-weight: 700; line-height: 1.3; margin: 0.3rem 0; }
+    .drawer-meta { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.5rem 0 1rem; }
+    .drawer-meta span { font-size: 0.78rem; color: var(--muted); background: var(--bg2); border: 1px solid var(--border); padding: 3px 10px; border-radius: 999px; }
+    .drawer-price { font-size: 1.8rem; font-weight: 800; color: #fff; }
+    .drawer-orig { font-size: 0.9rem; color: var(--muted); text-decoration: line-through; margin-left: 0.5rem; }
+    .drawer-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; margin: 1rem 0; border-top: 1px solid var(--border); padding-top: 1rem; }
+    .section-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin: 1.25rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .section-title::before { content: ''; display: block; width: 3px; height: 16px; background: var(--accent); border-radius: 999px; }
+    #similar-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .sim-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; transition: all .2s; display: flex; flex-direction: column; }
+    .sim-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .sim-img { aspect-ratio: 1; object-fit: cover; width: 100%; background: #1a2540; }
+    .sim-body { padding: 0.6rem; }
+    .sim-name { font-size: 0.78rem; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .sim-price { font-size: 0.85rem; font-weight: 700; color: var(--green); margin-top: 0.25rem; }
+    .score-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; background: rgba(99,102,241,.2); border: 1px solid rgba(99,102,241,.4); border-radius: 999px; color: var(--accent2); margin-top: 0.25rem; }
+
+    /* SPINNER */
+    .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 1.5rem auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--bg2); border: 1px solid var(--border); padding: 0.6rem 1.5rem; border-radius: 8px; font-size: 0.83rem; color: var(--muted); opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 300; }
+    #toast.show { opacity: 1; }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+    @media (max-width: 640px) {
+      #product-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+      .search-wrap { max-width: none; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <div class="logo-box">A</div>
+      <span class="logo-text">Aura <span>AI</span></span>
+    </a>
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="search-input" type="search" placeholder="Search products by name, brand, category…">
+    </div>
+    <div class="nav-links">
+      <a href="/exact-match" class="nav-btn nav-btn-ghost">🔍 Exact Match</a>
+      <a href="/login" class="nav-btn nav-btn-primary">AI Chatbot</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div id="cat-wrap" class="cats"></div>
+
+  <div class="grid-header">
+    <span class="grid-title" id="grid-label">Loading products…</span>
+  </div>
+
+  <div id="product-grid"></div>
+  <button id="load-more" style="display:none">Load More</button>
+  <div id="empty-msg" class="empty" style="display:none">
+    <div class="empty-icon">🛍️</div>
+    <p>No products found. Try a different search.</p>
+  </div>
+</div>
+
+<div id="drawer-overlay"></div>
+<div id="drawer">
+  <div class="drawer-close">
+    <span style="font-weight:700;font-size:0.95rem">Product Details</span>
+    <button class="drawer-close-btn" id="close-drawer">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<div id="toast">Loading…</div>
+
+<script>
+const API = '/api/v1/products';
+let allIds = [];
+let allProducts = [];
+let filteredProducts = [];
+let page = 0;
+const PAGE_SIZE = 20;
+let schema = null;
+let categories = new Set();
+let activeCategory = 'All';
+
+// ── helpers ─────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function stars(n) {
+  const full = Math.round((n || 4));
+  return Array.from({length: 5}, (_, i) => `<span class="star">${i < full ? '★' : '☆'}</span>`).join('');
+}
+function parseMeta(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'object') return raw;
+  try { return JSON.parse(raw); } catch {}
+  try {
+    // Python dict strings use single quotes and True/False/None
+    const fixed = raw
+      .replace(/'/g, '"')
+      .replace(/\bTrue\b/g, 'true')
+      .replace(/\bFalse\b/g, 'false')
+      .replace(/\bNone\b/g, 'null');
+    return JSON.parse(fixed);
+  } catch (e) {
+    console.warn('[parseMeta] failed to parse:', raw, e);
+    return {};
+  }
+}
+function rupee(n) { return n ? '₹' + Number(n).toLocaleString('en-IN') : ''; }
+// Upgrade http:// → https:// to prevent mixed-content blocking in browsers
+function safeImg(url) { return (url || '').replace(/^http:\/\//i, 'https://'); }
+
+// ── skeleton grid ────────────────────────────────────────────────────────────
+function showSkeletons(count = 20) {
+  const grid = document.getElementById('product-grid');
+  grid.innerHTML = Array.from({length: count}, () =>
+    `<div class="skeleton skel-card"></div>`).join('');
+}
+
+// ── render card ──────────────────────────────────────────────────────────────
+function renderCard(p) {
+  // API returns flat fields (name, brand, image_url…) OR nested metadata object
+  const meta = parseMeta(p.meta_data || p.metadata);
+  const name     = meta.name     || p.name     || p.product_search_description || 'Product';
+  const brand    = meta.brand    || p.brand    || '';
+  const price    = meta.discounted_price || p.discounted_price || meta.price || p.price || '';
+  const origPrice= meta.price    || p.price    || '';
+  const imgUrl   = safeImg(meta.image_url || p.image_url || '');
+  const id       = p.id          || meta.id    || '';
+  const discount = (origPrice && price && Number(origPrice) > Number(price))
+    ? Math.round((1 - Number(price) / Number(origPrice)) * 100) : 0;
+
+  return `
+    <div class="prod-card" data-id="${id}" onclick="window.location.href='/product/${id}'">
+      <div class="card-img-wrap">
+        <img src="${imgUrl}" alt="" loading="lazy" onerror="this.style.display='none'">
+        ${discount > 0 ? `<span class="card-badge">${discount}% OFF</span>` : ''}
+      </div>
+      <div class="card-body">
+        ${brand ? `<div class="card-brand">${brand}</div>` : ''}
+        <div class="card-name">${name}</div>
+        <div>
+          <span class="card-price">${rupee(price)}</span>
+          ${(origPrice && origPrice !== price) ? `<span class="card-price-original">${rupee(origPrice)}</span>` : ''}
+        </div>
+        <div class="card-stars">${stars()}</div>
+      </div>
+    </div>`;
+}
+
+// ── render page of products ──────────────────────────────────────────────────
+function renderPage(reset = false) {
+  const grid = document.getElementById('product-grid');
+  if (reset) { grid.innerHTML = ''; page = 0; }
+  const slice = filteredProducts.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  slice.forEach(p => grid.insertAdjacentHTML('beforeend', renderCard(p)));
+  page++;
+  const btn = document.getElementById('load-more');
+  btn.style.display = filteredProducts.length > page * PAGE_SIZE ? 'block' : 'none';
+  document.getElementById('grid-label').textContent =
+    `${filteredProducts.length} products` + (activeCategory !== 'All' ? ` in "${activeCategory}"` : '');
+  document.getElementById('empty-msg').style.display = filteredProducts.length === 0 ? 'block' : 'none';
+}
+
+// ── categories ───────────────────────────────────────────────────────────────
+function buildCats() {
+  allProducts.forEach(p => {
+    const meta = parseMeta(p.meta_data || p.metadata);
+    const cat = (meta.usage || p.usage || '').trim();
+    if (cat) categories.add(cat);
+  });
+  const wrap = document.getElementById('cat-wrap');
+  const all = ['All', ...Array.from(categories).sort()];
+  wrap.innerHTML = all.map(c =>
+    `<button class="cat-pill ${c === activeCategory ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>`
+  ).join('');
+}
+function filterCat(cat) {
+  activeCategory = cat;
+  document.querySelectorAll('.cat-pill').forEach(el => el.classList.toggle('active', el.textContent === cat));
+  applyFilters();
+}
+
+// ── search & filter ──────────────────────────────────────────────────────────
+let searchTimeout;
+document.getElementById('search-input').addEventListener('input', e => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => applyFilters(e.target.value.trim()), 400);
+});
+
+async function applyFilters(query = document.getElementById('search-input').value.trim()) {
+  if (!query) {
+    // No query – restore local product list with category filter
+    filteredProducts = allProducts.filter(p => {
+      if (activeCategory === 'All') return true;
+      const meta = parseMeta(p.meta_data || p.metadata);
+      return (meta.usage || p.usage || '') === activeCategory;
+    });
+    renderPage(true);
+    return;
+  }
+
+  // Non-empty query → vector similarity search
+  document.getElementById('grid-label').textContent = 'Searching…';
+  showSkeletons(12);
+  try {
+    const res = await fetch(`${API}/similar-products-txt?product_vec=${encodeURIComponent(query)}`, { method: 'POST' });
+    const data = await res.json();
+    if (!data.success || !data.data?.length) {
+      filteredProducts = [];
+      document.getElementById('product-grid').innerHTML = '';
+      document.getElementById('empty-msg').style.display = 'block';
+      document.getElementById('grid-label').textContent = `0 results for "${query}"`;
+      document.getElementById('load-more').style.display = 'none';
+      return;
+    }
+    // Normalise API response items so renderCard can consume them
+    filteredProducts = data.data.map(item => ({
+      id: item.id || (item.metadata && item.metadata.id) || '',
+      meta_data: null,
+      metadata: item.metadata || {},
+      product_search_description: (item.metadata && item.metadata.name) || '',
+      _score: item.score
+    }));
+    renderPage(true);
+    document.getElementById('grid-label').textContent =
+      `${filteredProducts.length} results for "${query}"`;
+  } catch (err) {
+    console.error('Search error:', err);
+    document.getElementById('grid-label').textContent = 'Search failed. Try again.';
+  }
+}
+
+// ── load products ─────────────────────────────────────────────────────────────
+async function loadProducts() {
+  showSkeletons(20);
+  try {
+    const [idsRes, schemaRes] = await Promise.all([
+      fetch(`${API}/all-id`),
+      fetch(`${API}/schema`)
+    ]);
+    const idsData = await idsRes.json();
+    schema = (await schemaRes.json()).data;
+    allIds = idsData.data || [];
+
+    // Fetch products in batches of 20 for speed
+    const BATCH = 30;
+    for (let i = 0; i < Math.min(allIds.length, 200); i += BATCH) {
+      const batch = allIds.slice(i, i + BATCH);
+      const results = await Promise.allSettled(
+        batch.map(id => fetch(`${API}/${id}`).then(r => r.json()))
+      );
+      results.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.data) {
+          const rows = Array.isArray(r.value.data) ? r.value.data : [r.value.data];
+          rows.forEach(p => { if (p) allProducts.push(p); });
+        }
+      });
+    }
+    buildCats();
+    filteredProducts = [...allProducts];
+    renderPage(true);
+  } catch (err) {
+    document.getElementById('product-grid').innerHTML = `<p style="color:var(--muted);grid-column:1/-1;padding:2rem;text-align:center">Failed to load products. Is the server running?</p>`;
+    console.error(err);
+  }
+}
+
+document.getElementById('load-more').addEventListener('click', () => renderPage(false));
+
+// ── DRAWER ─────────────────────────────────────────────────────────────────
+const drawer = document.getElementById('drawer');
+const overlay = document.getElementById('drawer-overlay');
+
+function openDrawer(id) {
+  const p = allProducts.find(x => String(x.id) === String(id) ||
+    String(parseMeta(x.meta_data || x.metadata).id) === String(id));
+  if (!p) return;
+  const meta = parseMeta(p.meta_data || p.metadata);
+  const name = meta.name || p.product_search_description || 'Product';
+  const price = meta.discounted_price || meta.price || '';
+  const orig = meta.price || '';
+  const imgUrl = safeImg(meta.image_url || '');
+  const brand = meta.brand || '';
+  const variant = meta.variant || '';
+  const usage = meta.usage || '';
+  const desc = p.product_search_description || '';
+
+  document.getElementById('drawer-body').innerHTML = `
+    <img class="drawer-img" src="${imgUrl}" alt="${name}" onerror="this.style.opacity='.3'">
+    <div class="drawer-brand">${brand}</div>
+    <div class="drawer-name">${name}</div>
+    <div class="drawer-meta">
+      ${variant ? `<span>📦 ${variant}</span>` : ''}
+      ${usage ? `<span>🏷️ ${usage}</span>` : ''}
+    </div>
+    <div>
+      <span class="drawer-price">${rupee(price)}</span>
+      ${(orig && orig !== price) ? `<span class="drawer-orig">${rupee(orig)}</span>` : ''}
+    </div>
+    ${desc ? `<div class="drawer-desc">${desc}</div>` : ''}
+    <div class="section-title">Similar Products</div>
+    <div id="similar-grid"><div class="spinner"></div></div>
+  `;
+
+  drawer.classList.add('open');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  fetchSimilar(imgUrl);
+}
+
+async function fetchSimilar(imgUrl) {
+  const grid = document.getElementById('similar-grid');
+  if (!imgUrl || !imgUrl.startsWith('http')) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:.82rem;grid-column:1/-1">No image available for similarity search.</p>';
+    return;
+  }
+  try {
+    // Fetch image directly and POST as multipart for similarity search
+    const imgRes = await fetch(imgUrl);
+    if (!imgRes.ok) throw new Error('image fetch failed');
+    const blob = await imgRes.blob();
+    const ext = blob.type.includes('png') ? '.png' : '.jpg';
+    const form = new FormData();
+    form.append('file', new File([blob], 'product' + ext, {type: blob.type}));
+
+    const res = await fetch(`${API}/similar-products-im`, { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (!data.data || data.data.length === 0) {
+      grid.innerHTML = '<p style="color:var(--muted);font-size:.82rem;grid-column:1/-1">No similar products found.</p>';
+      return;
+    }
+    grid.innerHTML = data.data.map(item => {
+      const m = item.metadata || {};
+      const iname = m.name || '';
+      const iurl = safeImg(m.image_url || '');
+      const iprice = m.discounted_price || m.price || '';
+      const score = item.score ? (item.score * 100).toFixed(1) : '';
+      const iid = item.id || m.id || '';
+      return `
+        <div class="sim-card" onclick="openDrawer('${iid}')">
+          <img class="sim-img" src="${iurl}" alt="${iname}" loading="lazy" onerror="this.style.opacity='.3'">
+          <div class="sim-body">
+            <div class="sim-name">${iname}</div>
+            <div class="sim-price">${rupee(iprice)}</div>
+            ${score ? `<div class="score-badge">Match ${score}%</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    grid.innerHTML = `<p style="color:var(--muted);font-size:.82rem;grid-column:1/-1">Could not fetch similar products.</p>`;
+    console.error(err);
+  }
+}
+
+function closeDrawer() {
+  drawer.classList.remove('open');
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('close-drawer').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+loadProducts();
+</script>
+</body>
+</html>
